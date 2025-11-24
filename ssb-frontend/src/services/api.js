@@ -70,10 +70,15 @@ export const parentService = {
 export const scheduleService = {
   getAll: () => api.get('/schedules'),
   getById: (id) => api.get(`/schedules/${id}`),
-  create: (data) => api.post('/schedules', data),
-  update: (id, data) => api.put(`/schedules/${id}`, data),
-  delete: (id) => api.delete(`/schedules/${id}`),
+  
+  // Hàm này để cập nhật trạng thái chuyến (Bắt đầu/Kết thúc)
+  updateStatus: (id, data) => api.put(`/schedules/${id}/status`, data),
+  
+  // Hàm này để điểm danh học sinh
+  updateStudentAttendance: (scheduleId, studentId, data) => 
+      api.put(`/schedules/${scheduleId}/students/${studentId}/attendance`, data),
 }
+
 
 // Stop API
 export const stopService = {

@@ -1,20 +1,30 @@
 import { useState, useEffect } from 'react'
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem } from '@mui/material'
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, InputAdornment } from '@mui/material'
 
-const RouteDialog = ({ open, onClose, onSave, route, buses = [] }) => {
-  const initialData = { tenTuyen: '', gioBatDau: '', gioKetThuc: '', idXeBus: '' }
+const RouteDialog = ({ open, onClose, onSave, route }) => {
+  // 1. Khởi tạo state khớp với DB mới: tenTuyen, moTa, khoangCach, thoiGianDuKien
+  const initialData = { 
+      tenTuyen: '', 
+      moTa: '', 
+      khoangCach: '', 
+      thoiGianDuKien: '' 
+  }
   const [formData, setFormData] = useState(initialData)
 
   useEffect(() => {
-    if (route) {
-        setFormData({ 
-            tenTuyen: route.tenTuyen || '',
-            gioBatDau: route.gioBatDau || '',
-            gioKetThuc: route.gioKetThuc || '',
-            idXeBus: route.idXeBus || '' // Đảm bảo không bị null
-        })
-    } else {
-        setFormData(initialData)
+    if (open) {
+        if (route) {
+            // Map dữ liệu khi sửa
+            setFormData({ 
+                tenTuyen: route.tenTuyen || '',
+                moTa: route.moTa || '',
+                khoangCach: route.khoangCach || '',
+                thoiGianDuKien: route.thoiGianDuKien || '' 
+            })
+        } else {
+            // Reset khi thêm mới
+            setFormData(initialData)
+        }
     }
   }, [route, open])
 
@@ -24,55 +34,64 @@ const RouteDialog = ({ open, onClose, onSave, route, buses = [] }) => {
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{route ? 'Sửa tuyến xe' : 'Thêm tuyến xe mới'}</DialogTitle>
+      <DialogTitle>{route ? 'Cập nhật thông tin tuyến' : 'Thêm tuyến đường mới'}</DialogTitle>
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+        {/* Tên tuyến */}
         <TextField 
             label="Tên tuyến" 
             name="tenTuyen" 
             fullWidth 
             value={formData.tenTuyen} 
             onChange={handleChange} 
+            placeholder="Ví dụ: Tuyến 01: Q8 - ĐH Sài Gòn"
         />
         
+        {/* Mô tả */}
         <TextField 
-            select 
-            label="Xe Bus phụ trách" 
-            name="idXeBus" 
+            label="Mô tả lộ trình" 
+            name="moTa" 
             fullWidth 
-            value={formData.idXeBus} 
-            onChange={handleChange}
-        >
-            <MenuItem value=""><em>Chưa chọn xe</em></MenuItem>
-            {/* Kiểm tra mảng buses trước khi map */}
-            {Array.isArray(buses) && buses.map((bus) => (
-                <MenuItem key={bus.idXeBus} value={bus.idXeBus}>
-                    {bus.bienSo} ({bus.sucChua} chỗ)
-                </MenuItem>
-            ))}
-        </TextField>
+            multiline
+            rows={3}
+            value={formData.moTa} 
+            onChange={handleChange} 
+            placeholder="Mô tả chi tiết về lộ trình đi qua..."
+        />
 
         <div style={{ display: 'flex', gap: 16 }}>
+            {/* Khoảng cách */}
             <TextField 
-                label="Giờ bắt đầu (HH:mm)" 
-                name="gioBatDau" 
+                label="Khoảng cách" 
+                name="khoangCach" 
+                type="number"
                 fullWidth 
-                value={formData.gioBatDau} 
+                value={formData.khoangCach} 
                 onChange={handleChange} 
-                placeholder="06:00" 
+                InputProps={{
+                    endAdornment: <InputAdornment position="end">km</InputAdornment>,
+                }}
             />
+            
+            {/* Thời gian dự kiến */}
             <TextField 
-                label="Giờ kết thúc (HH:mm)" 
-                name="gioKetThuc" 
+                label="Thời gian dự kiến" 
+                name="thoiGianDuKien" 
+                type="number"
                 fullWidth 
-                value={formData.gioKetThuc} 
+                value={formData.thoiGianDuKien} 
                 onChange={handleChange} 
-                placeholder="18:00" 
+                InputProps={{
+                    endAdornment: <InputAdornment position="end">phút</InputAdornment>,
+                }}
+                helperText="Dùng để tính giờ đến trạm cuối"
             />
         </div>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Hủy</Button>
-        <Button onClick={() => onSave(formData)} variant="contained" color="primary">Lưu</Button>
+        <Button onClick={() => onSave(formData)} variant="contained" color="primary">
+            {route ? 'Lưu thay đổi' : 'Thêm tuyến'}
+        </Button>
       </DialogActions>
     </Dialog>
   )

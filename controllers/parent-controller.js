@@ -72,33 +72,17 @@ export const deleteParent = async (req, res) => {
 
 // --- 2. CÁC HÀM CHO PHỤ HUYNH (APP) ---
 
-// Lấy danh sách con của phụ huynh (SỬA QUAN TRỌNG: Query bảng HOCSINH trực tiếp)
 export const getStudentsForParent = async (req, res) => {
     try {
-        const { id } = req.params; // idPhuHuynh
-        const pool = await poolPromise;
+        const { id } = req.params; // id phụ huynh
+        // Gọi hàm mới trong Model
+        const students = await Parent.getStudentsByParentId(id);
         
-        const result = await pool.request()
-            .input('idPhuHuynh', sql.Int, id)
-            .query(`
-                SELECT 
-                    h.idHocSinh, h.hoTen, h.lop, h.trangThai,
-                    t.tenTuyen, x.bienSo as xeBus, tx.hoTen as tenTaiXe, tx.soDienThoai as sdtTaiXe,
-                    d.tenDiemDung as tenDiemDon, t.gioBatDau
-                FROM HOCSINH h
-                LEFT JOIN TUYENDUONG t ON h.idTuyen = t.idTuyenDuong
-                LEFT JOIN XEBUS x ON t.idXeBus = x.idXe
-                LEFT JOIN (
-                    SELECT TOP 1 idTuyen, idTaiXe FROM LICHTRINH ORDER BY idLichTrinh DESC
-                ) lt ON t.idTuyenDuong = lt.idTuyen
-                LEFT JOIN TAIXE tx ON lt.idTaiXe = tx.idTaiXe
-                LEFT JOIN DIEMDUNG d ON h.idDiemDon = d.idDiemDung
-                WHERE h.idPhuHuynh = @idPhuHuynh
-            `);
-            
-        res.json({ success: true, data: result.recordset });
+        // Trả về dữ liệu chuẩn
+        res.json({ success: true, data: students });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        console.error("Lỗi lấy DS con:", error);
+        res.status(500).json({ success: false, message: 'Lỗi server: ' + error.message });
     }
 };
 

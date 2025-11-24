@@ -1,14 +1,8 @@
 import Route from '../models/route-model.js';
+import { sql, poolPromise } from '../config/database.js';
 
-function normalizeTimeStr(t) {
-    if (!t) return null;
-    const m = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(t.trim());
-    if (!m) return null;
-    const hh = String(parseInt(m[1], 10)).padStart(2, '0');
-    const mm = String(parseInt(m[2], 10)).padStart(2, '0');
-    const ss = String(m[3] ? parseInt(m[3], 10) : 0).padStart(2, '0');
-    return `${hh}:${mm}:${ss}`;
-}
+// --- HÀM HELPER CŨ KHÔNG CÒN CẦN THIẾT NỮA ---
+// (Bạn có thể xóa normalizeTimeStr đi hoặc để đó nếu nơi khác dùng)
 
 export const getAllRoutes = async (req, res) => {
     try {
@@ -30,39 +24,47 @@ export const getRouteById = async (req, res) => {
     }
 };
 
+// --- SỬA LOGIC TẠO TUYẾN MỚI ---
 export const createRoute = async (req, res) => {
-    const { tenTuyen, gioBatDau, gioKetThuc } = req.body || {};
-    if (!tenTuyen || !gioBatDau || !gioKetThuc) return res.status(400).json({ success: false, message: 'Thiếu thông tin bắt buộc' });
+    // 1. Nhận đúng các trường từ Frontend gửi lên (tenTuyen, moTa, khoangCach, thoiGianDuKien)
+    const { tenTuyen, moTa, khoangCach, thoiGianDuKien } = req.body || {};
 
-    const gioBatDauStr = normalizeTimeStr(gioBatDau);
-    const gioKetThucStr = normalizeTimeStr(gioKetThuc);
-    if (!gioBatDauStr || !gioKetThucStr) return res.status(400).json({ success: false, message: 'Giờ không hợp lệ' });
+    // 2. Chỉ kiểm tra tenTuyen là bắt buộc (các trường khác có thể null hoặc default)
+    if (!tenTuyen) {
+        return res.status(400).json({ success: false, message: 'Tên tuyến là bắt buộc' });
+    }
 
     try {
-        const newRoute = await Route.create({ ...req.body, gioBatDauStr, gioKetThucStr });
+        // 3. Gọi Model create (Không cần xử lý giờ giấc nữa)
+        const newRoute = await Route.create({ 
+            tenTuyen, 
+            moTa, 
+            khoangCach, 
+            thoiGianDuKien 
+        });
+        
         res.status(201).json({ success: true, message: 'Thêm tuyến thành công!', data: newRoute });
     } catch (err) {
         res.status(500).json({ success: false, message: 'Lỗi server: ' + err.message });
     }
 };
 
+// --- SỬA LOGIC CẬP NHẬT TUYẾN ---
 export const updateRoute = async (req, res) => {
     const id = parseInt(req.params.id);
-    const { gioBatDau, gioKetThuc } = req.body || {};
-    let gioBatDauStr = null, gioKetThucStr = null;
-
-    if (gioBatDau) {
-        gioBatDauStr = normalizeTimeStr(gioBatDau);
-        if (!gioBatDauStr) return res.status(400).json({ success: false, message: 'Giờ bắt đầu không hợp lệ' });
-    }
-    if (gioKetThuc) {
-        gioKetThucStr = normalizeTimeStr(gioKetThuc);
-        if (!gioKetThucStr) return res.status(400).json({ success: false, message: 'Giờ kết thúc không hợp lệ' });
-    }
+    // Nhận dữ liệu mới
+    const { tenTuyen, moTa, khoangCach, thoiGianDuKien } = req.body || {};
 
     try {
-        const updatedRoute = await Route.update(id, { ...req.body, gioBatDauStr, gioKetThucStr });
-        res.json({ success: true, message: 'Cập nhật thành công!', data: updatedRoute });
+        // Model chưa có hàm update, bạn cần thêm vào file route-model.js nếu muốn chức năng Sửa hoạt động.
+        // Tạm thời nếu Model chưa có update, ta sẽ báo lỗi hoặc giả lập
+        if (Route.update) {
+             const updatedRoute = await Route.update(id, { tenTuyen, moTa, khoangCach, thoiGianDuKien });
+             res.json({ success: true, message: 'Cập nhật thành công!', data: updatedRoute });
+        } else {
+             // Fallback nếu chưa viết hàm update trong Model
+             res.status(501).json({ success: false, message: 'Chức năng cập nhật chưa được cài đặt trong Model' });
+        }
     } catch (err) {
         if (err.message === 'Không tìm thấy tuyến xe') return res.status(404).json({ success: false, message: err.message });
         res.status(500).json({ success: false, message: 'Lỗi server: ' + err.message });

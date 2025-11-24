@@ -35,6 +35,33 @@ class Route {
         return route;
     }
 
+    // Thêm vào class Route trong models/route-model.js
+    static async update(id, routeData) {
+        const { tenTuyen, moTa, khoangCach, thoiGianDuKien } = routeData;
+        const pool = await poolPromise;
+
+        // Kiểm tra xem tuyến có tồn tại không
+        const check = await pool.request().input('id', sql.Int, id).query("SELECT idTuyenDuong FROM TUYENDUONG WHERE idTuyenDuong = @id");
+        if (check.recordset.length === 0) throw new Error('Không tìm thấy tuyến xe');
+
+        await pool.request()
+            .input('id', sql.Int, id)
+            .input('tenTuyen', sql.NVarChar, tenTuyen)
+            .input('moTa', sql.NVarChar, moTa || '')
+            .input('khoangCach', sql.Float, khoangCach || 0)
+            .input('thoiGianDuKien', sql.Int, thoiGianDuKien || 0)
+            .query(`
+            UPDATE TUYENDUONG 
+            SET tenTuyen = @tenTuyen, 
+                moTa = @moTa, 
+                khoangCach = @khoangCach, 
+                thoiGianDuKien = @thoiGianDuKien
+            WHERE idTuyenDuong = @id
+        `);
+
+        return { idTuyen: id, tenTuyen, moTa, khoangCach, thoiGianDuKien };
+    }
+
     static async create(routeData) {
         // DB chỉ cần tenTuyen, moTa, khoangCach, thoiGianDuKien
         const { tenTuyen, moTa, khoangCach, thoiGianDuKien, diemDung } = routeData;

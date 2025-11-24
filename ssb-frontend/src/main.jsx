@@ -6,6 +6,7 @@ import CssBaseline from '@mui/material/CssBaseline'
 import App from './App'
 import { AuthProvider } from './context/AuthContext' // Đảm bảo đường dẫn đúng
 import './index.css'
+import 'leaflet/dist/leaflet.css'
 const darkTheme = createTheme({
   palette: {
     mode: 'dark',

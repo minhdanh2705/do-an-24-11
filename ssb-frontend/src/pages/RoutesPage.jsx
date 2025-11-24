@@ -3,12 +3,11 @@ import { Box, Card, CardContent, CircularProgress, Typography } from '@mui/mater
 import AddIcon from '@mui/icons-material/Add'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
-import { routeService, busService } from '../services/api' // Import thêm busService
+import { routeService } from '../services/api' // Bỏ import busService vì không dùng ở đây nữa
 import RouteDialog from '../components/RouteDialog'
 
 const RoutesPage = () => {
   const [routes, setRoutes] = useState([])
-  const [buses, setBuses] = useState([]) // State lưu danh sách xe
   const [filteredRoutes, setFilteredRoutes] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -30,17 +29,13 @@ const RoutesPage = () => {
   const loadData = async () => {
     setLoading(true)
     try {
-      // Load cả Routes và Buses
-      const [routeRes, busRes] = await Promise.all([
-        routeService.getAll(),
-        busService.getAll()
-      ])
+      // Chỉ load Routes, không cần load Buses
+      const routeRes = await routeService.getAll()
+      
       const rData = Array.isArray(routeRes.data) ? routeRes.data : (routeRes.data?.data || [])
-      const bData = Array.isArray(busRes.data) ? busRes.data : (busRes.data?.data || [])
       
       setRoutes(rData)
       setFilteredRoutes(rData)
-      setBuses(bData)
     } catch (error) { 
       console.error(error)
       setRoutes([])
@@ -51,7 +46,8 @@ const RoutesPage = () => {
   const handleSave = async (data) => {
     try {
       if (selectedRoute) {
-        await routeService.update(selectedRoute.idTuyen, data)
+        // Lưu ý: Backend dùng idTuyenDuong
+        await routeService.update(selectedRoute.idTuyenDuong, data)
       } else {
         await routeService.create(data)
       }
@@ -83,7 +79,7 @@ const RoutesPage = () => {
         <div>
           <h1 className="admin-page-title">Quản lý tuyến đường</h1>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            Thiết lập lộ trình và thời gian di chuyển
+            Thiết lập lộ trình, khoảng cách và thời gian dự kiến
           </Typography>
         </div>
         <button className="admin-btn-add" onClick={handleAdd}>
@@ -93,7 +89,14 @@ const RoutesPage = () => {
 
       <Card sx={{ backgroundColor: 'transparent', boxShadow: 'none' }}>
         <CardContent sx={{ p: 0 }}>
-          <input type="text" className="admin-search-input" placeholder="Tìm kiếm tuyến đường..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ marginBottom: '20px' }} />
+          <input 
+            type="text" 
+            className="admin-search-input" 
+            placeholder="Tìm kiếm tuyến đường..." 
+            value={searchTerm} 
+            onChange={(e) => setSearchTerm(e.target.value)} 
+            style={{ marginBottom: '20px' }} 
+          />
         
         {loading ? (
             <Box sx={{display:'flex', justifyContent:'center', py: 5}}><CircularProgress/></Box>
@@ -102,27 +105,40 @@ const RoutesPage = () => {
             <table className="admin-table">
               <thead>
                 <tr>
-                  <th>ID</th>
-                  <th>Tên tuyến</th>
-                  <th>Xe Bus</th>
-                  <th>Thời gian bắt đầu</th>
-                  <th>Thời gian kết thúc</th>
-                  <th>Hành động</th>
+                  <th style={{ width: '50px' }}>ID</th>
+                  <th style={{ width: '200px' }}>Tên tuyến</th>
+                  <th>Mô tả</th>
+                  <th style={{ width: '150px' }}>Khoảng cách</th>
+                  <th style={{ width: '150px' }}>TG Dự kiến</th>
+                  <th style={{ width: '150px', textAlign: 'right' }}>Hành động</th>
                 </tr>
               </thead>
               <tbody>
                 {Array.isArray(filteredRoutes) && filteredRoutes.length > 0 ? (
                     filteredRoutes.map((route, index) => (
-                    <tr key={route.idTuyen || route.id || index}>
-                        <td>{route.idTuyen || route.id}</td>
-                        <td style={{ fontWeight: 600 }}>{route.tenTuyen || 'Chưa cập nhật'}</td>
-                        <td>{route.bienSo || 'Chưa gán'}</td>
-                        <td>{route.gioBatDau || '--:--'}</td>
-                        <td>{route.gioKetThuc || '--:--'}</td>
+                    <tr key={route.idTuyenDuong || index}>
+                        <td>{route.idTuyenDuong}</td>
+                        <td style={{ fontWeight: 600 }}>{route.tenTuyen || 'Chưa đặt tên'}</td>
+                        
+                        {/* Cột Mô tả */}
+                        <td style={{ maxWidth: '300px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {route.moTa || 'Không có mô tả'}
+                        </td>
+
+                        {/* Cột Khoảng cách */}
+                        <td>{route.khoangCach ? `${route.khoangCach} km` : '--'}</td>
+
+                        {/* Cột Thời gian dự kiến */}
+                        <td>{route.thoiGianDuKien ? `${route.thoiGianDuKien} phút` : '--'}</td>
+
                         <td>
-                        <div className="admin-action-btns">
-                            <button className="admin-btn-edit" onClick={() => handleEdit(route)}><EditIcon sx={{ fontSize: 16 }} /> Sửa</button>
-                            <button className="admin-btn-delete" onClick={() => handleDelete(route.idTuyen || route.id)}><DeleteIcon sx={{ fontSize: 16 }} /> Xóa</button>
+                        <div className="admin-action-btns" style={{ justifyContent: 'flex-end' }}>
+                            <button className="admin-btn-edit" onClick={() => handleEdit(route)}>
+                                <EditIcon sx={{ fontSize: 16 }} /> Sửa
+                            </button>
+                            <button className="admin-btn-delete" onClick={() => handleDelete(route.idTuyenDuong)}>
+                                <DeleteIcon sx={{ fontSize: 16 }} /> Xóa
+                            </button>
                         </div>
                         </td>
                     </tr>
@@ -140,7 +156,7 @@ const RoutesPage = () => {
       <RouteDialog 
         open={dialogOpen}
         route={selectedRoute}
-        buses={buses}
+        // Không cần truyền buses nữa
         onClose={() => setDialogOpen(false)}
         onSave={handleSave}
       />
