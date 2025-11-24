@@ -1,0 +1,200 @@
+/* ==== APP SHELL SIÊU TO KHỔNG LỒ - ĐẸP NHƯ IPHONE PRO MAX ==== */
+.parent-app-body {
+  background: linear-gradient(135deg, #000000 0%, #0f0f0f 100%);
+  min-height: 100vh;
+  padding: 20px 0;
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+}
+
+.parent-app-shell {
+  position: relative;
+  max-width: none !important;       
+  width: 130% !important;                 
+  margin: 0 auto;
+  border-radius: 32px;        
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.8),
+    0 0 100px rgba(59, 130, 246, 0.15);
+  border: 1.5px solid #333;
+  height: 92vh;               /* Chiếm gần hết chiều cao màn hình */
+  max-height: 900px;
+  overflow: hidden;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  /* Hiệu ứng kính mờ viền (rất sang) */
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+/* Topbar cao hơn, sang hơn */
+.parent-topbar {
+  height: 68px;
+  padding: 0 20px;
+  background: rgba(24, 24, 27, 0.9);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid #333;
+}
+
+.parent-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+/* Nội dung chính rộng rãi hơn */
+.parent-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 20px;         /* Tăng padding → thoáng hơn */
+  background: #000;
+}
+
+/* Card to hơn, đẹp hơn */
+.student-card-v2 {
+  background: linear-gradient(145deg, #1a1a1d, #141416);
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid #333;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.card-header {
+  gap: 16px;
+}
+
+.student-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.student-class {
+  font-size: 1rem;
+  color: #60a5fa;
+}
+
+/* Bản đồ to hơn, đẹp hơn */
+.student-card-v2 .map-placeholder,
+.student-card-v2 > div > div[style*="height: 240px"] {
+  height: 280px !important;     /* Bản đồ to hơn hẳn */
+  border-radius: 20px !important;
+  margin: 20px 0 !important;
+  overflow: hidden;
+  border: 2px solid #333;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+}
+
+/* Nút to hơn, dễ bấm hơn */
+.view-details-btn,
+.action-btn {
+  padding: 16px !important;
+  font-size: 1.05rem !important;
+  border-radius: 16px !important;
+  font-weight: 600;
+}
+
+/* Hiệu ứng hover đẹp hơn */
+.view-details-btn:hover,
+.action-btn:hover {
+  background: #3b82f6 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+}
+
+/* Greeting to hơn */
+.greeting {
+  font-size: 1.8rem !important;
+  font-weight: 800;
+  background: linear-gradient(90deg, #60a5fa, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 8px;
+}
+
+.greeting + p {
+  font-size: 1.1rem;
+  color: #94a3b8;
+  margin-bottom: 32px;
+}
+
+.section-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 32px 0 16px;
+  color: #60a5fa;
+}
+/* ĐẢM BẢO MENU 3 GẠCH VÀ THÔNG BÁO LUÔN ĐÈ LÊN TRÊN BẢN ĐỒ */
+.menu-dropdown,
+.notification-dropdown {
+  z-index: 1000 !important;   /* Cao hơn bất kỳ bản đồ nào */
+  position: absolute;
+}
+
+/* Nếu MapComponent dùng Leaflet (hầu hết đều vậy) → ép nó không vượt quyền */
+.leaflet-container,
+.map-container,
+div[class*="leaflet"],
+div[style*="z-index"] {
+  z-index: 1 !important;   /* Bản đồ chỉ được ở dưới cùng */
+}
+
+/* Đặc biệt cho trường hợp MapComponent tự set z-index cao */
+div[style*="position"] > div:first-child,
+.MapComponent,
+.mapboxgl-map,
+.leaflet-map,
+.leaflet-pane,
+.leaflet-tile-pane,
+.leaflet-objects-pane {
+  z-index: 1 !important;
+}
+.notification-dropdown {
+  position: absolute;
+  right: 0;
+  top: 50px;
+  width: 320px;
+  max-height: 400px;
+  background: #141416;
+  border: 1px solid #333;
+  border-radius: 16px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.7);
+  overflow-y: auto;
+  z-index: 1000;
+  color: #fff;
+  padding: 0;
+}
+
+.notif-header {
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 12px;
+  border-bottom: 1px solid #333;
+  background: rgba(24,24,27,0.95);
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+}
+
+.notif-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.notif-item {
+  padding: 10px 16px;
+  border-bottom: 1px solid #333;
+}
+
+.notif-item:last-child {
+  border-bottom: none;
+}
+
+.notif-empty {
+  padding: 20px;
+  text-align: center;
+  color: #888;
+  font-size: 0.9rem;
+}

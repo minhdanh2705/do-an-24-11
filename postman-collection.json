@@ -1,0 +1,406 @@
+{
+  "info": {
+    "name": "SSB Backend API - Week 3",
+    "description": "Postman collection để test API của Smart School Bus System",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"taiKhoan\": \"admin\",\n  \"matKhau\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/auth/login",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/auth/logout",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Buses",
+      "item": [
+        {
+          "name": "Get All Buses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/buses",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "buses"]
+            }
+          }
+        },
+        {
+          "name": "Get Bus By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/buses/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "buses", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create Bus",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bienSo\": \"51A-12345\",\n  \"sucChua\": 45,\n  \"trangThai\": 1\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/buses",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "buses"]
+            }
+          }
+        },
+        {
+          "name": "Update Bus",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bienSo\": \"51A-12345\",\n  \"sucChua\": 50,\n  \"trangThai\": 1\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/buses/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "buses", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Bus",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/buses/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "buses", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Students",
+      "item": [
+        {
+          "name": "Get All Students",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/students",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "students"]
+            }
+          }
+        },
+        {
+          "name": "Get Student By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/students/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "students", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create Student",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hoTen\": \"Nguyễn Văn A\",\n  \"lop\": \"10A1\",\n  \"ngaySinh\": \"2008-05-15\",\n  \"noiSinh\": \"TP.HCM\",\n  \"idTuyen\": 1,\n  \"diemDon\": 2,\n  \"trangThai\": 1\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/students",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "students"]
+            }
+          }
+        },
+        {
+          "name": "Update Student",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hoTen\": \"Nguyễn Văn A Updated\",\n  \"lop\": \"10A1\",\n  \"ngaySinh\": \"2008-05-15\",\n  \"noiSinh\": \"TP.HCM\",\n  \"idTuyen\": 1,\n  \"diemDon\": 3,\n  \"trangThai\": 1\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/students/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "students", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Student",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/students/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "students", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Routes",
+      "item": [
+        {
+          "name": "Get All Routes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/routes",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "routes"]
+            }
+          }
+        },
+        {
+          "name": "Get Route By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/routes/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "routes", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create Route",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenTuyen\": \"Tuyến mới\",\n  \"gioBatDau\": \"06:30:00\",\n  \"gioKetThuc\": \"08:00:00\",\n  \"diemDung\": [\n    {\"idDiemDung\": 1, \"thuTu\": 1},\n    {\"idDiemDung\": 2, \"thuTu\": 2}\n  ]\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/routes",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "routes"]
+            }
+          }
+        },
+        {
+          "name": "Update Route",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenTuyen\": \"Tuyến cập nhật\",\n  \"gioBatDau\": \"06:45:00\",\n  \"gioKetThuc\": \"08:15:00\",\n  \"diemDung\": [\n    {\"idDiemDung\": 1, \"thuTu\": 1},\n    {\"idDiemDung\": 2, \"thuTu\": 2},\n    {\"idDiemDung\": 3, \"thuTu\": 3}\n  ]\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/routes/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "routes", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Route",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/routes/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "routes", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Drivers",
+      "item": [
+        {
+          "name": "Get All Drivers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/drivers",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "drivers"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Parents",
+      "item": [
+        {
+          "name": "Get All Parents",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/parents",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "parents"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Stops",
+      "item": [
+        {
+          "name": "Get All Stops",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/stops",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "stops"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Schedules",
+      "item": [
+        {
+          "name": "Get All Schedules",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/schedules",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "schedules"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
