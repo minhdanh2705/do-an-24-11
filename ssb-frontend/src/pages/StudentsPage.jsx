@@ -1,35 +1,22 @@
-import { useState, useEffect } from 'react'
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Button,
-  Chip,
-  TextField,
-  InputAdornment,
-} from '@mui/material'
-import AddIcon from '@mui/icons-material/Add'
-import EditIcon from '@mui/icons-material/Edit'
-import DeleteIcon from '@mui/icons-material/Delete'
-import SearchIcon from '@mui/icons-material/Search'
-import { studentService, routeService, parentService } from '../services/api'
-import StudentDialog from '../components/StudentDialog'
+"use client"
+
+import { useState, useEffect } from "react"
+import { Box, Card, CardContent, Typography, CircularProgress } from "@mui/material"
+import AddIcon from "@mui/icons-material/Add"
+import EditIcon from "@mui/icons-material/Edit"
+import DeleteIcon from "@mui/icons-material/Delete"
+import { studentService, routeService, parentService } from "../services/api"
+import StudentDialog from "../components/StudentDialog"
 
 const StudentsPage = () => {
   const [students, setStudents] = useState([])
   const [routes, setRoutes] = useState([])
   const [parents, setParents] = useState([])
   const [filteredStudents, setFilteredStudents] = useState([])
-  const [searchTerm, setSearchTerm] = useState('')
+  const [searchTerm, setSearchTerm] = useState("")
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedStudent, setSelectedStudent] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     loadData()
@@ -37,9 +24,10 @@ const StudentsPage = () => {
 
   useEffect(() => {
     if (searchTerm) {
-      const filtered = students.filter(student =>
-        student.hoTen.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.lop.toLowerCase().includes(searchTerm.toLowerCase())
+      const filtered = students.filter(
+        (student) =>
+          student.hoTen.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          student.lop.toLowerCase().includes(searchTerm.toLowerCase()),
       )
       setFilteredStudents(filtered)
     } else {
@@ -48,22 +36,35 @@ const StudentsPage = () => {
   }, [searchTerm, students])
 
   const loadData = async () => {
+    setLoading(true)
     try {
+      console.log("[v0] Loading students data...")
       const [studentRes, routeRes, parentRes] = await Promise.all([
         studentService.getAll(),
         routeService.getAll(),
         parentService.getAll(),
       ])
-      
-      const studentsData = Array.isArray(studentRes.data) ? studentRes.data : (studentRes.data?.data || [])
-      const routesData = Array.isArray(routeRes.data) ? routeRes.data : (routeRes.data?.data || [])
-      const parentsData = Array.isArray(parentRes.data) ? parentRes.data : (parentRes.data?.data || [])
-      
+
+      console.log("[v0] Student response:", studentRes.data)
+      console.log("[v0] Route response:", routeRes.data)
+      console.log("[v0] Parent response:", parentRes.data)
+
+      const studentsData = Array.isArray(studentRes.data) ? studentRes.data : studentRes.data?.data || []
+      const routesData = Array.isArray(routeRes.data) ? routeRes.data : routeRes.data?.data || []
+      const parentsData = Array.isArray(parentRes.data) ? parentRes.data : parentRes.data?.data || []
+
+      console.log("[v0] Processed students:", studentsData.length)
+      console.log("[v0] Processed routes:", routesData.length)
+      console.log("[v0] Processed parents:", parentsData.length)
+
       setStudents(studentsData)
       setRoutes(routesData)
       setParents(parentsData)
     } catch (error) {
-      console.error('Failed to load data:', error)
+      console.error("[v0] Failed to load data:", error)
+      console.error("[v0] Error details:", error.response?.data)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -78,72 +79,38 @@ const StudentsPage = () => {
   }
 
   const handleDelete = async (id) => {
-    if (window.confirm('Bạn có chắc muốn xóa học sinh này?')) {
+    if (window.confirm("Bạn có chắc muốn xóa học sinh này?")) {
       try {
         await studentService.delete(id)
         loadData()
       } catch (error) {
-        console.error('Failed to delete student:', error)
-        alert('Không thể xóa học sinh')
+        console.error("Failed to delete student:", error)
+        alert("Không thể xóa học sinh")
       }
     }
   }
 
   const handleSave = async (studentData) => {
     try {
-      const { parentIds, ...studentDataWithoutParents } = studentData;
-      
-      let studentId;
       if (selectedStudent) {
-        const result = await studentService.update(selectedStudent.idHocSinh, studentDataWithoutParents)
-        studentId = result.data?.data?.idHocSinh || selectedStudent.idHocSinh;
-        console.log('[v0] Updated student, ID:', studentId);
-        
-        if (parentIds && parentIds.length > 0) {
-          try {
-            // Get current linked parents
-            const currentParentsRes = await studentService.getParents(studentId);
-            const currentParents = currentParentsRes.data?.data || [];
-            
-            // Unlink old parents
-            await Promise.all(
-              currentParents.map(parent => 
-                parentService.unlinkStudent(parent.idPhuHuynh, studentId)
-              )
-            );
-            console.log('[v0] Unlinked old parents');
-          } catch (unlinkError) {
-            console.log('[v0] No existing parents to unlink or unlink failed:', unlinkError.message);
-          }
-        }
+        await studentService.update(selectedStudent.idHocSinh, studentData)
       } else {
-        const result = await studentService.create(studentDataWithoutParents)
-        studentId = result.data?.data?.idHocSinh || result.data?.idHocSinh;
-        console.log('[v0] Created student, ID:', studentId);
+        await studentService.create(studentData)
       }
-
-      if (parentIds && parentIds.length > 0 && studentId) {
-        console.log('[v0] Linking parents:', parentIds, 'to student:', studentId);
-        try {
-          await Promise.all(
-            parentIds.map(parentId => 
-              parentService.linkStudent(parentId, studentId)
-            )
-          );
-          console.log('[v0] Parents linked successfully');
-        } catch (linkError) {
-          console.error('[v0] Failed to link parents:', linkError);
-          throw new Error('Lưu học sinh thành công nhưng không thể liên kết phụ huynh: ' + linkError.message);
-        }
-      }
-
       setDialogOpen(false)
       loadData()
     } catch (error) {
-      console.error('[v0] Failed to save student:', error)
-      console.error('[v0] Error response:', error.response?.data)
-      alert('Không thể lưu thông tin học sinh: ' + (error.response?.data?.message || error.message))
+      console.error("[v0] Failed to save student:", error)
+      alert("Không thể lưu thông tin học sinh: " + (error.response?.data?.message || error.message))
     }
+  }
+
+  if (loading) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
+        <CircularProgress />
+      </Box>
+    )
   }
 
   return (
@@ -161,7 +128,7 @@ const StudentsPage = () => {
         </button>
       </div>
 
-      <Card sx={{ backgroundColor: 'transparent', boxShadow: 'none' }}>
+      <Card sx={{ backgroundColor: "transparent", boxShadow: "none" }}>
         <CardContent sx={{ p: 0 }}>
           <input
             type="text"
@@ -169,7 +136,7 @@ const StudentsPage = () => {
             placeholder="Tìm kiếm theo tên hoặc lớp..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ marginBottom: '20px' }}
+            style={{ marginBottom: "20px" }}
           />
 
           <div className="admin-table-container">
@@ -185,31 +152,45 @@ const StudentsPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredStudents.map((student) => (
-                  <tr key={student.idHocSinh}>
-                    <td style={{ fontWeight: 600 }}>{student.hoTen}</td>
-                    <td>{student.lop}</td>
-                    <td>{student.tenTuyen || 'Chưa phân công'}</td>
-                    <td>{student.diemDon || '-'}</td>
-                    <td>
-                      <span className={student.trangThai === 1 || student.trangThai === 'Hoạt động' ? 'chip-active' : 'chip-inactive'}>
-                        {student.trangThai === 1 || student.trangThai === 'Hoạt động' ? 'Hoạt động' : 'Dừng'}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="admin-action-btns">
-                        <button className="admin-btn-edit" onClick={() => handleEdit(student)}>
-                          <EditIcon sx={{ fontSize: 16 }} />
-                          Sửa
-                        </button>
-                        <button className="admin-btn-delete" onClick={() => handleDelete(student.idHocSinh)}>
-                          <DeleteIcon sx={{ fontSize: 16 }} />
-                          Xóa
-                        </button>
-                      </div>
+                {filteredStudents.length > 0 ? (
+                  filteredStudents.map((student) => (
+                    <tr key={student.idHocSinh}>
+                      <td style={{ fontWeight: 600 }}>{student.hoTen}</td>
+                      <td>{student.lop}</td>
+                      <td>{student.tenTuyen || "Chưa phân công"}</td>
+                      <td>{student.diemDon || "-"}</td>
+                      <td>
+                        <span
+                          className={
+                            student.trangThai === 1 || student.trangThai === "Hoạt động"
+                              ? "chip-active"
+                              : "chip-inactive"
+                          }
+                        >
+                          {student.trangThai === 1 || student.trangThai === "Hoạt động" ? "Hoạt động" : "Dừng"}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="admin-action-btns">
+                          <button className="admin-btn-edit" onClick={() => handleEdit(student)}>
+                            <EditIcon sx={{ fontSize: 16 }} />
+                            Sửa
+                          </button>
+                          <button className="admin-btn-delete" onClick={() => handleDelete(student.idHocSinh)}>
+                            <DeleteIcon sx={{ fontSize: 16 }} />
+                            Xóa
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="6" style={{ textAlign: "center", padding: "40px", color: "#94a3b8" }}>
+                      Không có học sinh nào
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
