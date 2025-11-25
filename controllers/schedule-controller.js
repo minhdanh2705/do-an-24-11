@@ -60,27 +60,32 @@ export const updateScheduleStatus = async (req, res) => {
 export const updateCurrentStop = async (req, res) => {
     try {
         const id = parseInt(req.params.id); // idLichTrinh
-        const { stopIndex, stopName } = req.body; // Thứ tự trạm (1, 2, 3...)
+        // PHẢI NHẬN idDiemDung từ Frontend (DriverDashboard.jsx)
+        const { stopIndex, stopName, idDiemDung } = req.body; 
         const io = req.app.get('io');
 
         const pool = await poolPromise;
+        
+        // --- Cập nhật DB: Cả số thứ tự và ID điểm dừng hiện tại ---
         await pool.request()
             .input('id', sql.Int, id)
             .input('thuTu', sql.Int, stopIndex)
-            .query("UPDATE LICHTRINH SET thuTuTramHienTai = @thuTu WHERE idLichTrinh = @id");
+            .input('idDiem', sql.Int, idDiemDung) // <--- LƯU ID ĐIỂM DỪNG MỚI
+            .query("UPDATE LICHTRINH SET thuTuTramHienTai = @thuTu, idDiemDungHienTai = @idDiem WHERE idLichTrinh = @id");
+        // --------------------------------------------------------
 
-        // Báo tin cho phụ huynh biết xe đã tới trạm mới
-        // (Lấy lại danh sách phụ huynh để gửi - có thể tối ưu cache nếu cần)
+        // Báo tin cho phụ huynh
         const scheduleData = await Schedule.getById(id);
         scheduleData?.danhSachDiemDanh?.forEach(st => {
-             // Chỉ báo cho những phụ huynh có con chưa đón hoặc đang trên xe
-             if (st.trangThai !== 2) {
+             if (st.trangThai !== 2) { 
+                 // Socket sẽ kích hoạt loadData() ở ParentDashboard
                  notifyParent(io, st.idPhuHuynh, 'Cập nhật lộ trình', `Xe đã đến trạm: ${stopName}`, 'INFO');
              }
         });
 
         res.json({ success: true, message: 'Đã cập nhật trạm hiện tại' });
     } catch (err) {
+        console.error("Lỗi cập nhật trạm:", err);
         res.status(500).json({ success: false, message: err.message });
     }
 };
