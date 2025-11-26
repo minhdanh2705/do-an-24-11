@@ -1,4 +1,3 @@
-"use client"
 
 import { useState, useEffect } from "react"
 import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, MenuItem } from "@mui/material"
@@ -11,6 +10,7 @@ const StudentDialog = ({ open, student, routes, parents, onClose, onSave }) => {
     idTuyen: "",
     idDiemDon: "",
     idPhuHuynh: "",
+    trangThai: 1,
   })
   const [routeStops, setRouteStops] = useState([])
 
@@ -22,10 +22,11 @@ const StudentDialog = ({ open, student, routes, parents, onClose, onSave }) => {
         idTuyen: student.idTuyen || "",
         idDiemDon: student.idDiemDon || "",
         idPhuHuynh: student.idPhuHuynh || "",
+        trangThai: student.trangThai ?? 1,
       })
       if (student.idTuyen) fetchStops(student.idTuyen)
     } else {
-      setFormData({ hoTen: "", lop: "", idTuyen: "", idDiemDon: "", idPhuHuynh: "" })
+      setFormData({ hoTen: "", lop: "", idTuyen: "", idDiemDon: "", idPhuHuynh: "", trangThai: 1 })
       setRouteStops([])
     }
   }, [student, open])
@@ -56,7 +57,7 @@ const StudentDialog = ({ open, student, routes, parents, onClose, onSave }) => {
       idTuyen: formData.idTuyen ? Number.parseInt(formData.idTuyen) : null,
       idDiemDon: formData.idDiemDon ? Number.parseInt(formData.idDiemDon) : null,
       idPhuHuynh: formData.idPhuHuynh ? Number.parseInt(formData.idPhuHuynh) : null,
-      trangThai: 1,
+      trangThai: Number.parseInt(formData.trangThai),
     })
   }
 
@@ -135,6 +136,19 @@ const StudentDialog = ({ open, student, routes, parents, onClose, onSave }) => {
               {p.hoTen} - {p.soDienThoai}
             </MenuItem>
           ))}
+        </TextField>
+
+        <TextField
+          select
+          name="trangThai"
+          label="Trạng thái"
+          fullWidth
+          margin="normal"
+          value={formData.trangThai}
+          onChange={handleChange}
+        >
+          <MenuItem value={1}>Đi học</MenuItem>
+          <MenuItem value={0}>Nghỉ học</MenuItem>
         </TextField>
       </DialogContent>
       <DialogActions>

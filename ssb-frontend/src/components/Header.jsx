@@ -1,9 +1,10 @@
-import { AppBar, Toolbar, Typography, IconButton, Box, Button, Avatar, TextField, InputAdornment, Badge } from '@mui/material'
-import MenuIcon from '@mui/icons-material/Menu'
-import LogoutIcon from '@mui/icons-material/Logout'
-import NotificationsIcon from '@mui/icons-material/Notifications'
-import SearchIcon from '@mui/icons-material/Search'
-import { useAuth } from '../context/AuthContext'
+
+
+import { AppBar, Toolbar, Typography, IconButton, Box, Avatar, Badge } from "@mui/material"
+import MenuIcon from "@mui/icons-material/Menu"
+import LogoutIcon from "@mui/icons-material/Logout"
+import NotificationsIcon from "@mui/icons-material/Notifications"
+import { useAuth } from "../context/AuthContext"
 
 const Header = ({ toggleSidebar }) => {
   const { user, logout } = useAuth()
@@ -12,51 +13,50 @@ const Header = ({ toggleSidebar }) => {
     try {
       await logout()
     } catch (error) {
-      console.error('Logout failed:', error)
+      console.error("Logout failed:", error)
     }
   }
 
   const getRoleDisplay = () => {
     switch (user?.role) {
-      case 'QUAN_LY': return 'Quản lý'
-      case 'TAI_XE': return 'Tài xế'
-      case 'PHU_HUYNH': return 'Phụ huynh'
-      default: return ''
+      case "QUAN_LY":
+        return "Quản lý"
+      case "TAI_XE":
+        return "Tài xế"
+      case "PHU_HUYNH":
+        return "Phụ huynh"
+      default:
+        return ""
     }
   }
 
   return (
-    <AppBar 
-      position="fixed" 
-      sx={{ 
+    <AppBar
+      position="fixed"
+      sx={{
         zIndex: (theme) => theme.zIndex.drawer + 1,
-        backgroundColor: '#000000',
-        borderBottom: '1px solid #1e293b',
-        boxShadow: 'none',
+        backgroundColor: "#000000",
+        borderBottom: "1px solid #1e293b",
+        boxShadow: "none",
       }}
     >
       <Toolbar sx={{ height: 70 }}>
-        <IconButton
-          color="inherit"
-          edge="start"
-          onClick={toggleSidebar}
-          sx={{ mr: 2 }}
-        >
+        <IconButton color="inherit" edge="start" onClick={toggleSidebar} sx={{ mr: 2 }}>
           <MenuIcon />
         </IconButton>
-        
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           <Box
             sx={{
               width: 40,
               height: 40,
-              bgcolor: 'primary.main',
+              bgcolor: "primary.main",
               borderRadius: 2,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 'bold',
-              fontSize: '1.25rem',
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontWeight: "bold",
+              fontSize: "1.25rem",
             }}
           >
             SSB
@@ -68,42 +68,20 @@ const Header = ({ toggleSidebar }) => {
 
         <Box sx={{ flexGrow: 1 }} />
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <TextField
-            size="small"
-            placeholder="Search..."
-            sx={{
-              width: 250,
-              '& .MuiOutlinedInput-root': {
-                bgcolor: '#0a0a0a',
-                borderRadius: 2,
-                '& fieldset': {
-                  borderColor: '#1e293b',
-                },
-              },
-            }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ color: '#94a3b8' }} />
-                </InputAdornment>
-              ),
-            }}
-          />
-          
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <IconButton color="inherit">
             <Badge badgeContent={3} color="error">
               <NotificationsIcon />
             </Badge>
           </IconButton>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, ml: 1 }}>
-            <Avatar 
-              sx={{ 
-                width: 36, 
-                height: 36, 
-                bgcolor: 'primary.main',
-                fontWeight: 'bold'
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, ml: 1 }}>
+            <Avatar
+              sx={{
+                width: 36,
+                height: 36,
+                bgcolor: "primary.main",
+                fontWeight: "bold",
               }}
             >
               {(user?.hoTen || user?.tenDangNhap)?.charAt(0).toUpperCase()}
@@ -117,15 +95,15 @@ const Header = ({ toggleSidebar }) => {
               </Typography>
             </Box>
           </Box>
-          
+
           <IconButton
             color="inherit"
             onClick={handleLogout}
-            sx={{ 
+            sx={{
               ml: 1,
-              '&:hover': {
-                bgcolor: 'rgba(255,255,255,0.05)',
-              }
+              "&:hover": {
+                bgcolor: "rgba(255,255,255,0.05)",
+              },
             }}
           >
             <LogoutIcon />

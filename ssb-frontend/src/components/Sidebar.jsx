@@ -31,12 +31,11 @@ const Sidebar = ({ open }) => {
     } else if (user?.role === 'TAI_XE') {
       return [
         { text: 'Lịch làm việc', icon: <ScheduleIcon />, path: '/driver' },
-        { text: 'Danh sách học sinh', icon: <PersonIcon />, path: '/driver/students' },
+       
       ]
     } else if (user?.role === 'PHU_HUYNH') {
       return [
         { text: 'Theo dõi xe bus', icon: <DirectionsBusIcon />, path: '/parent' },
-        { text: 'Thông tin con em', icon: <PersonIcon />, path: '/parent/info' },
       ]
     }
     return []

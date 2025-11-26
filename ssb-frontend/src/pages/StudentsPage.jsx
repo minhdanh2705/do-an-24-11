@@ -1,4 +1,3 @@
-"use client"
 
 import { useState, useEffect } from "react"
 import { Box, Card, CardContent, Typography, CircularProgress } from "@mui/material"
@@ -38,31 +37,21 @@ const StudentsPage = () => {
   const loadData = async () => {
     setLoading(true)
     try {
-      console.log("[v0] Loading students data...")
       const [studentRes, routeRes, parentRes] = await Promise.all([
         studentService.getAll(),
         routeService.getAll(),
         parentService.getAll(),
       ])
 
-      console.log("[v0] Student response:", studentRes.data)
-      console.log("[v0] Route response:", routeRes.data)
-      console.log("[v0] Parent response:", parentRes.data)
-
       const studentsData = Array.isArray(studentRes.data) ? studentRes.data : studentRes.data?.data || []
       const routesData = Array.isArray(routeRes.data) ? routeRes.data : routeRes.data?.data || []
       const parentsData = Array.isArray(parentRes.data) ? parentRes.data : parentRes.data?.data || []
-
-      console.log("[v0] Processed students:", studentsData.length)
-      console.log("[v0] Processed routes:", routesData.length)
-      console.log("[v0] Processed parents:", parentsData.length)
 
       setStudents(studentsData)
       setRoutes(routesData)
       setParents(parentsData)
     } catch (error) {
-      console.error("[v0] Failed to load data:", error)
-      console.error("[v0] Error details:", error.response?.data)
+      console.error("Failed to load data:", error)
     } finally {
       setLoading(false)
     }
@@ -100,7 +89,7 @@ const StudentsPage = () => {
       setDialogOpen(false)
       loadData()
     } catch (error) {
-      console.error("[v0] Failed to save student:", error)
+      console.error("Failed to save student:", error)
       alert("Không thể lưu thông tin học sinh: " + (error.response?.data?.message || error.message))
     }
   }
@@ -160,14 +149,8 @@ const StudentsPage = () => {
                       <td>{student.tenTuyen || "Chưa phân công"}</td>
                       <td>{student.diemDon || "-"}</td>
                       <td>
-                        <span
-                          className={
-                            student.trangThai === 1 || student.trangThai === "Hoạt động"
-                              ? "chip-active"
-                              : "chip-inactive"
-                          }
-                        >
-                          {student.trangThai === 1 || student.trangThai === "Hoạt động" ? "Hoạt động" : "Dừng"}
+                        <span className={student.trangThai === 1 ? "chip-active" : "chip-inactive"}>
+                          {student.trangThai === 1 ? "Đi học" : "Nghỉ học"}
                         </span>
                       </td>
                       <td>

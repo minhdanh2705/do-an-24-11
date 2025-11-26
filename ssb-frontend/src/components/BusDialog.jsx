@@ -32,13 +32,7 @@ const BusDialog = ({ open, onClose, onSave, bus }) => {
           <Grid item xs={6}>
             <TextField fullWidth type="number" label="Sức chứa (chỗ)" name="sucChua" value={formData.sucChua} onChange={handleChange} />
           </Grid>
-          <Grid item xs={6}>
-            <TextField select fullWidth label="Trạng thái" name="trangThai" value={formData.trangThai} onChange={handleChange}>
-                <MenuItem value={1}>Hoạt động</MenuItem>
-                <MenuItem value={2}>Bảo trì </MenuItem>
-                <MenuItem value={0}>Ngưng</MenuItem>
-            </TextField>
-          </Grid>
+          
         </Grid>
       </DialogContent>
       <DialogActions>
