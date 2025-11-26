@@ -67,10 +67,16 @@ export const parentService = {
 }
 
 // Schedule API
+// Schedule API
 export const scheduleService = {
   getAll: () => api.get('/schedules'),
   getById: (id) => api.get(`/schedules/${id}`),
   
+  create: (data) => api.post('/schedules', data),
+  update: (id, data) => api.put(`/schedules/${id}`, data),
+  delete: (id) => api.delete(`/schedules/${id}`),
+  // ---------------------------------
+
   // Hàm này để cập nhật trạng thái chuyến (Bắt đầu/Kết thúc)
   updateStatus: (id, data) => api.put(`/schedules/${id}/status`, data),
   

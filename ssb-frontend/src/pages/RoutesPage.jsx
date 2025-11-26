@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react"
 import { Box, Card, CardContent, CircularProgress, Typography } from "@mui/material"
 import { routeService } from "../services/api"
-
+import '../styles/admin.css'
 const RoutesPage = () => {
   const [routes, setRoutes] = useState([])
   const [filteredRoutes, setFilteredRoutes] = useState([])

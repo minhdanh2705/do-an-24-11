@@ -1,13 +1,18 @@
 import { useState, useEffect } from 'react'
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Grid, Typography } from '@mui/material'
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Grid, Typography, MenuItem } from '@mui/material'
 
 const ParentDialog = ({ open, onClose, onSave, parent }) => {
-  const initialData = { hoTen: '', soDienThoai: '', email: '', taiKhoan: '', matKhau: '' }
+  const initialData = { hoTen: '', soDienThoai: '', email: '', taiKhoan: '', matKhau: '', trangThai: 1 }
   const [formData, setFormData] = useState(initialData)
 
   useEffect(() => {
     if (parent) {
-      setFormData({ ...parent, taiKhoan: '', matKhau: '' })
+      setFormData({ 
+          ...parent, 
+          taiKhoan: '', 
+          matKhau: '',
+          trangThai: parent.trangThai !== undefined ? parent.trangThai : 1 
+      })
     } else {
       setFormData(initialData)
     }
@@ -30,6 +35,21 @@ const ParentDialog = ({ open, onClose, onSave, parent }) => {
           </Grid>
           <Grid item xs={6}>
             <TextField fullWidth label="Email" name="email" value={formData.email} onChange={handleChange} />
+          </Grid>
+
+          {/* --- Ô CHỌN TRẠNG THÁI --- */}
+          <Grid item xs={12}>
+             <TextField
+                select
+                fullWidth
+                label="Trạng thái"
+                name="trangThai"
+                value={formData.trangThai}
+                onChange={handleChange}
+             >
+                <MenuItem value={1} sx={{ color: 'green' }}>Hoạt động</MenuItem>
+                <MenuItem value={0} sx={{ color: 'red' }}>Ngưng hoạt động</MenuItem>
+             </TextField>
           </Grid>
           
           {!parent && (

@@ -7,7 +7,7 @@ import ScheduleIcon from '@mui/icons-material/Schedule'
 import DashboardIcon from '@mui/icons-material/Dashboard'
 import AssessmentIcon from '@mui/icons-material/Assessment'
 import SettingsIcon from '@mui/icons-material/Settings'
-import BadgeIcon from '@mui/icons-material/Badge'; // Icon cho Tài xế
+import BadgeIcon from '@mui/icons-material/Badge';
 import { useAuth } from '../context/AuthContext'
 
 const Sidebar = ({ open }) => {
@@ -22,7 +22,7 @@ const Sidebar = ({ open }) => {
         { text: 'Lịch Trình', icon: <ScheduleIcon />, path: '/admin/schedules' },
         { text: 'Xe Buýt', icon: <DirectionsBusIcon />, path: '/admin/buses' },
         { text: 'Tuyến xe', icon: <RouteIcon />, path: '/admin/routes' },
-        { text: 'Tài xế', icon: <BadgeIcon />, path: '/admin/drivers' }, // Mới thêm
+        { text: 'Tài xế', icon: <BadgeIcon />, path: '/admin/drivers' },
         { text: 'Học sinh', icon: <PersonIcon />, path: '/admin/students' },
         { text: 'Phụ huynh', icon: <PersonIcon />, path: '/admin/parents' },
         { text: 'Báo cáo', icon: <AssessmentIcon />, path: '/admin/reports' },
@@ -31,7 +31,6 @@ const Sidebar = ({ open }) => {
     } else if (user?.role === 'TAI_XE') {
       return [
         { text: 'Lịch làm việc', icon: <ScheduleIcon />, path: '/driver' },
-       
       ]
     } else if (user?.role === 'PHU_HUYNH') {
       return [
@@ -52,14 +51,23 @@ const Sidebar = ({ open }) => {
       variant="persistent"
       open={open}
       sx={{
-        width: 260,
+        // --- PHẦN SỬA LỖI Ở ĐÂY ---
+        width: open ? 260 : 0,  // Nếu mở: 260px, Đóng: 0px (để nội dung tràn ra)
         flexShrink: 0,
+        transition: 'width 0.3s ease', // Hiệu ứng trượt mượt mà
+        whiteSpace: 'nowrap',
+        boxSizing: 'border-box',
+        
         '& .MuiDrawer-paper': {
           width: 260,
           boxSizing: 'border-box',
           mt: '70px',
-          backgroundColor: '#000000',
+          // Tôi đổi màu này thành #0f172a để khớp với admin.css của bạn (thay vì #000000)
+          // Nếu muốn đen tuyền thì đổi lại thành #000000
+          backgroundColor: '#0f172a', 
+          color: '#ffffff', // Thêm màu chữ trắng mặc định
           borderRight: '1px solid #1e293b',
+          height: 'calc(100% - 70px)', // Tránh bị đè hoặc dư scroll
         },
       }}
     >
@@ -104,6 +112,7 @@ const Sidebar = ({ open }) => {
                 primaryTypographyProps={{
                   fontWeight: location.pathname === item.path ? 600 : 400,
                   fontSize: '0.875rem',
+                  color: 'inherit' // Lấy màu từ cha
                 }}
               />
             </ListItemButton>

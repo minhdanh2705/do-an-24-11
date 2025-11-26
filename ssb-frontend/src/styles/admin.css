@@ -1,237 +1,177 @@
-/* Admin Dashboard Styles */
-.admin-stats-card {
-  background: linear-gradient(135deg, rgba(14, 165, 233, 0.1) 0%, rgba(14, 165, 233, 0.05) 100%);
-  border: 1px solid #1e293b;
-  border-radius: 16px;
-  padding: 24px;
-  transition: all 0.3s ease;
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+:root {
+  --bg-dark: #0f172a;
+  --bg-card: #1e293b;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --primary-color: #3b82f6;
+  --border-color: #334155;
 }
 
-.admin-stats-card:hover {
-  transform: translateY(-4px);
-  border-color: var(--color-primary);
-  box-shadow: 0 8px 24px rgba(14, 165, 233, 0.15);
-}
+/* RESET & GLOBAL */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Roboto', sans-serif; background-color: var(--bg-dark); color: var(--text-primary); }
 
-.admin-stats-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-}
+/* HEADER */
+.admin-page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.admin-page-title { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
 
-.admin-stats-icon.primary {
-  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-}
-
-.admin-stats-icon.success {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-}
-
-.admin-stats-icon.warning {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-}
-
-.admin-stats-icon.info {
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-}
-
-.admin-table-container {
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid #1e293b;
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.admin-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-}
-
-.admin-table thead tr {
-  background: rgba(15, 23, 42, 0.6);
-  border-bottom: 1px solid #1e293b;
-}
-
-.admin-table th {
-  padding: 16px;
-  text-align: left;
-  font-weight: 600;
-  font-size: 0.875rem;
-  color: #94a3b8;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.admin-table td {
-  padding: 16px;
-  border-bottom: 1px solid #1e293b;
-  color: #e2e8f0;
-}
-
-.admin-table tbody tr {
-  transition: background-color 0.2s ease;
-}
-
-.admin-table tbody tr:hover {
-  background: rgba(14, 165, 233, 0.05);
-}
-
-.admin-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.admin-search-input {
-  background: rgba(10, 10, 10, 0.6);
-  border: 1px solid #1e293b;
-  border-radius: 12px;
-  padding: 12px 16px;
-  color: #e2e8f0;
-  width: 100%;
-  font-size: 0.875rem;
-  transition: all 0.2s ease;
-}
-
-.admin-search-input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
-}
-
-.admin-search-input::placeholder {
-  color: #64748b;
-}
-
-/* Action Buttons */
-.admin-action-btns {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.admin-btn-edit {
-  padding: 6px 12px;
-  background: transparent;
-  border: 1px solid #0ea5e9;
-  color: #0ea5e9;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.admin-btn-edit:hover {
-  background: rgba(14, 165, 233, 0.1);
-  transform: translateY(-1px);
-}
-
-.admin-btn-delete {
-  padding: 6px 12px;
-  background: transparent;
-  border: 1px solid #ef4444;
-  color: #ef4444;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.admin-btn-delete:hover {
-  background: rgba(239, 68, 68, 0.1);
-  transform: translateY(-1px);
-}
-
+/* ADD BUTTON */
 .admin-btn-add {
-  padding: 10px 20px;
-  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-  border: none;
-  color: white;
-  border-radius: 10px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+  display: flex; align-items: center; gap: 8px;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: white; border: none; padding: 10px 20px; border-radius: 8px;
+  font-weight: 600; cursor: pointer; transition: all 0.2s;
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+}
+.admin-btn-add:hover { transform: translateY(-1px); }
+
+/* INPUT SEARCH */
+.admin-search-input {
+  width: 100%; padding: 12px 16px;
+  background-color: #1a2236; border: 1px solid var(--border-color);
+  border-radius: 8px; color: white; font-size: 0.95rem; outline: none;
+}
+.admin-search-input:focus { border-color: var(--primary-color); }
+
+/* --- TABLE --- */
+.admin-table-container { 
+  background-color: var(--bg-card); 
+  border-radius: 12px; 
+  border: 1px solid var(--border-color); 
+  overflow: hidden; 
+  /* Thêm dòng này để bảng có thanh cuộn ngang nếu màn hình quá nhỏ */
+  overflow-x: auto; 
+}
+.admin-table { width: 100%; border-collapse: collapse; text-align: left; }
+.admin-table th { 
+  background-color: #1a2236; 
+  color: var(--text-secondary); 
+  font-weight: 600; padding: 16px; 
+  border-bottom: 1px solid var(--border-color); 
+  font-size: 0.85rem; text-transform: uppercase;
+  white-space: nowrap; /* Giữ tiêu đề cột trên 1 dòng */
+}
+.admin-table td { 
+  padding: 16px; 
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05); 
+  color: var(--text-primary); 
+  vertical-align: middle;
+}
+.admin-table tbody tr:hover { background-color: rgba(255, 255, 255, 0.02); }
+
+/* --- QUAN TRỌNG: XỬ LÝ CỘT HÀNH ĐỘNG (Cột cuối cùng) --- */
+/* Tự động căn phải và không cho xuống dòng cột cuối cùng của mọi bảng */
+.admin-table th:last-child,
+.admin-table td:last-child {
+    text-align: right;
+    white-space: nowrap;
+    width: 1%; /* Mẹo CSS: Co cột lại vừa khít nội dung */
 }
 
-.admin-btn-add:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(14, 165, 233, 0.4);
+/* --- ACTION BUTTONS (Đã chỉnh sửa để tự động gọn đẹp) --- */
+.admin-action-btns {
+  display: flex; gap: 8px; justify-content: flex-end; /* Căn nút về bên phải */
 }
 
-/* Page Header */
-.admin-page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
+/* Base Style cho nút Sửa/Xóa */
+/* Sử dụng !important để đè lên style mặc định của MUI nếu có */
+.admin-btn-icon, 
+.admin-btn-edit, 
+.admin-btn-delete,
+.admin-action-btns button { 
+  min-width: 36px !important; /* Ép chiều rộng cố định */
+  width: 36px !important;
+  height: 36px !important;
+  padding: 0 !important;
+  border-radius: 8px !important;
+  border: 1px solid transparent;
+  display: inline-flex !important;
+  align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.2s;
+  background: transparent;
+  
+  /* MẸO: Ẩn chữ (Sửa/Xóa) đi, chỉ hiện Icon */
+  font-size: 0 !important; 
 }
 
-.admin-page-title {
-  font-size: 1.875rem;
+/* Đảm bảo Icon bên trong (SVG) vẫn hiện to rõ */
+.admin-btn-icon svg, 
+.admin-btn-edit svg, 
+.admin-btn-delete svg,
+.admin-action-btns button svg {
+    font-size: 1.2rem !important; /* Kích thước icon */
+    display: block;
+}
+
+/* Edit Button Style */
+.admin-btn-icon.edit, .admin-btn-edit { 
+  background-color: rgba(59, 130, 246, 0.1) !important; 
+  color: #3b82f6 !important; 
+  border-color: rgba(59, 130, 246, 0.2) !important;
+}
+.admin-btn-icon.edit:hover, .admin-btn-edit:hover { 
+  background-color: #3b82f6 !important; color: white !important; 
+}
+
+/* Delete Button Style */
+.admin-btn-icon.delete, .admin-btn-delete { 
+  background-color: rgba(239, 68, 68, 0.1) !important; 
+  color: #ef4444 !important; 
+  border-color: rgba(239, 68, 68, 0.2) !important;
+}
+.admin-btn-icon.delete:hover, .admin-btn-delete:hover { 
+  background-color: #ef4444 !important; color: white !important; 
+}
+
+/* CHIPS STATUS */
+.chip-active, .status-ready { 
+  padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; 
+  background: rgba(34, 197, 94, 0.1); color: #4ade80; border: 1px solid #15803d; 
+  display: inline-block; /* Giữ khối không bị vỡ */
+}
+.chip-inactive, .status-completed { 
+  padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; 
+  background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid #991b1b; 
+  display: inline-block;
+}
+/* --- TRẠNG THÁI LỊCH TRÌNH --- */
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
   font-weight: 700;
-  color: #f1f5f9;
-  margin: 0;
-}
-
-/* Map Container */
-.admin-map-container {
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid #1e293b;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 24px;
-}
-
-.admin-map-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #f1f5f9;
-  margin-bottom: 16px;
-}
-
-/* Status Chips */
-.chip-active {
-  background: rgba(16, 185, 129, 0.15);
-  color: #10b981;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
   display: inline-block;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap; /* Giữ trạng thái trên 1 dòng */
 }
 
-.chip-inactive {
-  background: rgba(100, 116, 139, 0.15);
-  color: #64748b;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  display: inline-block;
+/* 1. Chưa khởi hành (Màu xám) */
+.status-pending {
+  background: rgba(148, 163, 184, 0.1);
+  color: #94a3b8;
+  border: 1px solid #475569;
 }
 
-.chip-warning {
-  background: rgba(245, 158, 11, 0.15);
-  color: #f59e0b;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  display: inline-block;
+/* 2. Đang chạy (Màu xanh dương + Hiệu ứng nhấp nháy) */
+.status-running {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid #2563eb;
+  animation: pulse 2s infinite; 
+}
+
+/* 3. Đã hoàn thành (Màu xanh lá) */
+.status-completed {
+  background: rgba(34, 197, 94, 0.1);
+  color: #4ade80;
+  border: 1px solid #16a34a;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(59, 130, 246, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
 }

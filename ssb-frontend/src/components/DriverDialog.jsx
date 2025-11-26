@@ -1,14 +1,19 @@
 import { useState, useEffect } from 'react'
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Grid, Typography } from '@mui/material'
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Grid, Typography, MenuItem } from '@mui/material'
 
 const DriverDialog = ({ open, onClose, onSave, driver }) => {
-  const initialData = { hoTen: '', soDienThoai: '', email: '', taiKhoan: '', matKhau: '' };
+  const initialData = { hoTen: '', soDienThoai: '', email: '', taiKhoan: '', matKhau: '', trangThai: 1 };
   const [formData, setFormData] = useState(initialData);
 
   useEffect(() => {
     if (driver) {
-      // Nếu sửa: Ẩn mật khẩu (Backend xử lý riêng hoặc không cho sửa pass ở đây)
-      setFormData({ ...driver, taiKhoan: driver.taiKhoan || '', matKhau: '' });
+      // Nếu sửa: Load data và trạng thái
+      setFormData({ 
+          ...driver, 
+          taiKhoan: driver.taiKhoan || '', 
+          matKhau: '',
+          trangThai: driver.trangThai !== undefined ? driver.trangThai : 1 
+      });
     } else {
       setFormData(initialData);
     }
@@ -31,6 +36,21 @@ const DriverDialog = ({ open, onClose, onSave, driver }) => {
           </Grid>
           <Grid item xs={6}>
             <TextField fullWidth label="Email" name="email" value={formData.email} onChange={handleChange} />
+          </Grid>
+
+          {/* --- Ô CHỌN TRẠNG THÁI --- */}
+          <Grid item xs={12}>
+             <TextField
+                select
+                fullWidth
+                label="Trạng thái"
+                name="trangThai"
+                value={formData.trangThai}
+                onChange={handleChange}
+             >
+                <MenuItem value={1} sx={{ color: 'green' }}>Hoạt động</MenuItem>
+                <MenuItem value={0} sx={{ color: 'red' }}>Ngưng hoạt động</MenuItem>
+             </TextField>
           </Grid>
           
           {/* Chỉ hiện form tạo tài khoản khi thêm mới */}

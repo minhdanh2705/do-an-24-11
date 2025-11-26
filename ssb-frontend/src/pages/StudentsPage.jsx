@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react"
 import { Box, Card, CardContent, Typography, CircularProgress } from "@mui/material"
 import AddIcon from "@mui/icons-material/Add"
@@ -6,11 +5,12 @@ import EditIcon from "@mui/icons-material/Edit"
 import DeleteIcon from "@mui/icons-material/Delete"
 import { studentService, routeService, parentService } from "../services/api"
 import StudentDialog from "../components/StudentDialog"
+import '../styles/admin.css'
 
 const StudentsPage = () => {
   const [students, setStudents] = useState([])
   const [routes, setRoutes] = useState([])
-  const [parents, setParents] = useState([])
+  const [activeParents, setActiveParents] = useState([]) // Đổi tên state để rõ nghĩa
   const [filteredStudents, setFilteredStudents] = useState([])
   const [searchTerm, setSearchTerm] = useState("")
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -45,11 +45,14 @@ const StudentsPage = () => {
 
       const studentsData = Array.isArray(studentRes.data) ? studentRes.data : studentRes.data?.data || []
       const routesData = Array.isArray(routeRes.data) ? routeRes.data : routeRes.data?.data || []
-      const parentsData = Array.isArray(parentRes.data) ? parentRes.data : parentRes.data?.data || []
+      const allParents = Array.isArray(parentRes.data) ? parentRes.data : parentRes.data?.data || []
+
+      // --- LỌC PHỤ HUYNH: Chỉ lấy người có trạng thái = 1 ---
+      const filteredParents = allParents.filter(p => p.trangThai === 1 || p.trangThai === 'Hoạt động');
 
       setStudents(studentsData)
       setRoutes(routesData)
-      setParents(parentsData)
+      setActiveParents(filteredParents) // Lưu danh sách đã lọc
     } catch (error) {
       console.error("Failed to load data:", error)
     } finally {
@@ -74,7 +77,7 @@ const StudentsPage = () => {
         loadData()
       } catch (error) {
         console.error("Failed to delete student:", error)
-        alert("Không thể xóa học sinh")
+        alert("Không thể xóa học sinh: " + (error.response?.data?.message || error.message))
       }
     }
   }
@@ -88,9 +91,10 @@ const StudentsPage = () => {
       }
       setDialogOpen(false)
       loadData()
+      alert(selectedStudent ? 'Cập nhật thành công!' : 'Thêm mới thành công!')
     } catch (error) {
       console.error("Failed to save student:", error)
-      alert("Không thể lưu thông tin học sinh: " + (error.response?.data?.message || error.message))
+      alert("Lỗi: " + (error.response?.data?.message || error.message))
     }
   }
 
@@ -147,7 +151,7 @@ const StudentsPage = () => {
                       <td style={{ fontWeight: 600 }}>{student.hoTen}</td>
                       <td>{student.lop}</td>
                       <td>{student.tenTuyen || "Chưa phân công"}</td>
-                      <td>{student.diemDon || "-"}</td>
+                      <td>{student.tenDiemDon || "-"}</td>
                       <td>
                         <span className={student.trangThai === 1 ? "chip-active" : "chip-inactive"}>
                           {student.trangThai === 1 ? "Đi học" : "Nghỉ học"}
@@ -157,11 +161,9 @@ const StudentsPage = () => {
                         <div className="admin-action-btns">
                           <button className="admin-btn-edit" onClick={() => handleEdit(student)}>
                             <EditIcon sx={{ fontSize: 16 }} />
-                            Sửa
                           </button>
                           <button className="admin-btn-delete" onClick={() => handleDelete(student.idHocSinh)}>
                             <DeleteIcon sx={{ fontSize: 16 }} />
-                            Xóa
                           </button>
                         </div>
                       </td>
@@ -184,7 +186,7 @@ const StudentsPage = () => {
         open={dialogOpen}
         student={selectedStudent}
         routes={routes}
-        parents={parents}
+        parents={activeParents} // Truyền danh sách đã lọc vào đây
         onClose={() => setDialogOpen(false)}
         onSave={handleSave}
       />

@@ -2,14 +2,6 @@ import { useState, useEffect } from 'react'
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem, Grid } from '@mui/material'
 
 const ScheduleDialog = ({ open, onClose, onSave, initialData, data = { routes: [], buses: [], drivers: [] } }) => {
-  // Debug: Bật F12 xem dữ liệu thực tế nhận được là gì
-  useEffect(() => {
-    if (open) {
-      console.log("Dữ liệu Routes nhận được:", data.routes);
-      console.log("Dữ liệu Buses nhận được:", data.buses);
-    }
-  }, [open, data]);
-
   const defaultState = { 
     idTuyen: '', 
     idXe: '', 
@@ -27,11 +19,10 @@ const ScheduleDialog = ({ open, onClose, onSave, initialData, data = { routes: [
         setFormData({
             ...defaultState,
             ...initialData,
-            // Map đúng trường ID cho form edit
             idTuyen: initialData.idTuyen || initialData.idTuyenDuong || '', 
             idXe: initialData.idXe || initialData.idXeBus || '',
             idTaiXe: initialData.idTaiXe || '',
-            thoiGianBatDau: formatTime(initialData.thoiGianBatDau || initialData.gioKhoiHanh || '06:00'),
+            thoiGianBatDau: formatTime(initialData.thoiGianBatDau || '06:00'),
             thoiGianKetThuc: formatTime(initialData.thoiGianKetThuc || '07:00'),
             ngayChay: initialData.ngayChay ? new Date(initialData.ngayChay).toISOString().split('T')[0] : defaultState.ngayChay
         })
@@ -45,7 +36,6 @@ const ScheduleDialog = ({ open, onClose, onSave, initialData, data = { routes: [
       if (!timeStr) return '06:00';
       if (timeStr.includes('T')) {
           const d = new Date(timeStr);
-          // Lưu ý: Dùng toTimeString để lấy giờ địa phương chính xác
           return d.toTimeString().substring(0, 5);
       }
       return timeStr.substring(0, 5);
@@ -64,18 +54,16 @@ const ScheduleDialog = ({ open, onClose, onSave, initialData, data = { routes: [
     const { name, value } = e.target
     let updatedData = { ...formData, [name]: value }
 
-    // LOGIC TỰ ĐỘNG TÍNH TOÁN GIỜ KẾT THÚC
+    // Logic tự động tính giờ kết thúc khi chọn Tuyến hoặc đổi giờ đi
     if (name === 'idTuyen' || name === 'thoiGianBatDau') {
         const selectedRouteId = name === 'idTuyen' ? value : formData.idTuyen;
         const currentStartTime = name === 'thoiGianBatDau' ? value : formData.thoiGianBatDau;
 
-        // FIX LỖI: Dùng toán tử == (2 dấu bằng) để so sánh lỏng (String vs Number)
-        // FIX LỖI: Kiểm tra cả idTuyen (alias) và idTuyenDuong (gốc)
+        // Tìm tuyến trong danh sách (Chấp nhận cả idTuyen và idTuyenDuong)
         const selectedRoute = data.routes.find(r => 
             (r.idTuyenDuong == selectedRouteId) || (r.idTuyen == selectedRouteId)
         );
         
-        // Nếu tìm thấy tuyến và tuyến có thời gian dự kiến -> Tính giờ kết thúc
         if (selectedRoute && selectedRoute.thoiGianDuKien) {
             updatedData.thoiGianKetThuc = calculateEndTime(currentStartTime, selectedRoute.thoiGianDuKien);
         }
@@ -84,12 +72,20 @@ const ScheduleDialog = ({ open, onClose, onSave, initialData, data = { routes: [
     setFormData(updatedData)
   }
 
+  const handleSave = () => {
+      // Validate đơn giản trước khi gửi
+      if (!formData.idTuyen || !formData.idXe || !formData.idTaiXe) {
+          alert("Vui lòng chọn đầy đủ Tuyến đường, Xe Bus và Tài xế!");
+          return;
+      }
+      onSave(formData);
+  }
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>{initialData ? 'Cập nhật lịch trình' : 'Tạo lịch trình chạy mới'}</DialogTitle>
       <DialogContent>
         <Grid container spacing={2} sx={{ mt: 0.5 }}>
-            {/* 1. Chọn Tuyến Đường */}
             <Grid item xs={12}>
                 <TextField 
                     select 
@@ -100,7 +96,6 @@ const ScheduleDialog = ({ open, onClose, onSave, initialData, data = { routes: [
                     onChange={handleChange}
                 >
                     {data.routes && data.routes.map(r => {
-                        // FIX LỖI: Ưu tiên lấy idTuyen, nếu không có lấy idTuyenDuong
                         const val = r.idTuyen || r.idTuyenDuong; 
                         return (
                             <MenuItem key={val} value={val}>
@@ -111,7 +106,6 @@ const ScheduleDialog = ({ open, onClose, onSave, initialData, data = { routes: [
                 </TextField>
             </Grid>
 
-            {/* 2. Chọn Thời Gian */}
             <Grid item xs={6}>
                 <TextField 
                     type="time" 
@@ -131,12 +125,11 @@ const ScheduleDialog = ({ open, onClose, onSave, initialData, data = { routes: [
                     fullWidth 
                     InputLabelProps={{ shrink: true }} 
                     value={formData.thoiGianKetThuc} 
-                    disabled // Chỉ để xem, không cho sửa
+                    disabled 
                     helperText="Tự động tính theo Tuyến đường"
                 />
             </Grid>
 
-            {/* 3. Chọn Xe Bus */}
             <Grid item xs={6}>
                 <TextField 
                     select 
@@ -147,7 +140,6 @@ const ScheduleDialog = ({ open, onClose, onSave, initialData, data = { routes: [
                     onChange={handleChange}
                 >
                     {data.buses && data.buses.map(b => {
-                        // FIX LỖI: Ưu tiên lấy idXe (mới), nếu không có lấy idXeBus (cũ)
                         const val = b.idXe || b.idXeBus;
                         return (
                             <MenuItem key={val} value={val}>
@@ -158,7 +150,6 @@ const ScheduleDialog = ({ open, onClose, onSave, initialData, data = { routes: [
                 </TextField>
             </Grid>
 
-            {/* 4. Chọn Tài Xế */}
             <Grid item xs={6}>
                 <TextField 
                     select 
@@ -176,7 +167,6 @@ const ScheduleDialog = ({ open, onClose, onSave, initialData, data = { routes: [
                 </TextField>
             </Grid>
 
-            {/* 5. Chọn Ngày */}
             <Grid item xs={12}>
                 <TextField 
                     type="date" 
@@ -192,7 +182,7 @@ const ScheduleDialog = ({ open, onClose, onSave, initialData, data = { routes: [
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Hủy</Button>
-        <Button onClick={() => onSave(formData)} variant="contained" color="primary">
+        <Button onClick={handleSave} variant="contained" color="primary">
             {initialData ? 'Lưu thay đổi' : 'Tạo lịch trình'}
         </Button>
       </DialogActions>

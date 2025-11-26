@@ -62,7 +62,7 @@ const Header = ({ toggleSidebar }) => {
             SSB
           </Box>
           <Typography variant="h6" component="div" sx={{ fontWeight: 700 }}>
-            SmartBus Admin
+            Smart School Bus
           </Typography>
         </Box>
 

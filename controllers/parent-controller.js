@@ -6,7 +6,8 @@ import Parent from '../models/parent-model.js';
 export const getAllParents = async (req, res) => {
     try {
         const pool = await poolPromise;
-        const result = await pool.request().query('SELECT * FROM PHUHUYNH WHERE trangThai = 1');
+        // Lấy tất cả (Không dùng WHERE trangThai = 1 để Admin thấy được hết)
+        const result = await pool.request().query('SELECT * FROM PHUHUYNH');
         res.json({ success: true, data: result.recordset });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -28,14 +29,13 @@ export const getParentById = async (req, res) => {
 
 export const createParent = async (req, res) => {
     try {
-        const { hoTen, soDienThoai, email, diaChi } = req.body;
+        const { hoTen, soDienThoai, email } = req.body;
         const pool = await poolPromise;
         await pool.request()
             .input('hoTen', sql.NVarChar, hoTen)
             .input('soDienThoai', sql.NVarChar, soDienThoai)
             .input('email', sql.NVarChar, email)
-            .input('diaChi', sql.NVarChar, diaChi)
-            .query('INSERT INTO PHUHUYNH (hoTen, soDienThoai, email, diaChi, trangThai) VALUES (@hoTen, @soDienThoai, @email, @diaChi, 1)');
+            .query('INSERT INTO PHUHUYNH (hoTen, soDienThoai, email, trangThai) VALUES (@hoTen, @soDienThoai, @email, 1)');
         res.json({ success: true, message: 'Tạo phụ huynh thành công' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -45,15 +45,15 @@ export const createParent = async (req, res) => {
 export const updateParent = async (req, res) => {
     try {
         const { id } = req.params;
-        const { hoTen, soDienThoai, email, diaChi } = req.body;
+        const { hoTen, soDienThoai, email, trangThai } = req.body;
         const pool = await poolPromise;
         await pool.request()
             .input('id', sql.Int, id)
             .input('hoTen', sql.NVarChar, hoTen)
             .input('soDienThoai', sql.NVarChar, soDienThoai)
             .input('email', sql.NVarChar, email)
-            .input('diaChi', sql.NVarChar, diaChi)
-            .query('UPDATE PHUHUYNH SET hoTen=@hoTen, soDienThoai=@soDienThoai, email=@email, diaChi=@diaChi WHERE idPhuHuynh=@id');
+            .input('trangThai', sql.Int, trangThai)
+            .query('UPDATE PHUHUYNH SET hoTen=@hoTen, soDienThoai=@soDienThoai, email=@email, trangThai=@trangThai WHERE idPhuHuynh=@id');
         res.json({ success: true, message: 'Cập nhật thành công' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -72,25 +72,19 @@ export const deleteParent = async (req, res) => {
 };
 
 // --- 2. CÁC HÀM CHO PHỤ HUYNH (APP) ---
-
 export const getStudentsForParent = async (req, res) => {
     try {
-        const { id } = req.params; // id phụ huynh
-        // Gọi hàm mới trong Model
+        const { id } = req.params;
         const students = await Parent.getStudentsByParentId(id);
-        
-        // Trả về dữ liệu chuẩn
         res.json({ success: true, data: students });
     } catch (error) {
-        console.error("Lỗi lấy DS con:", error);
         res.status(500).json({ success: false, message: 'Lỗi server: ' + error.message });
     }
 };
 
-// Các hàm liên kết (Giữ lại để tránh lỗi route, dù database đã đổi)
 export const linkStudentToParent = async (req, res) => {
     try {
-        const { id } = req.params; // parentId
+        const { id } = req.params; 
         const { studentId } = req.body;
         const pool = await poolPromise;
         await pool.request()

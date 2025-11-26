@@ -5,7 +5,7 @@ import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
 import { parentService } from '../services/api'
 import ParentDialog from '../components/ParentDialog'
-
+import '../styles/admin.css'
 const ParentsPage = () => {
   const [parents, setParents] = useState([])
   const [loading, setLoading] = useState(true)

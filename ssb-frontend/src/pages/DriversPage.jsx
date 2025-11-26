@@ -5,7 +5,7 @@ import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
 import { driverService } from '../services/api' 
 import DriverDialog from '../components/DriverDialog'
-
+import '../styles/admin.css'
 const DriversPage = () => {
   const [drivers, setDrivers] = useState([])
   const [loading, setLoading] = useState(true)

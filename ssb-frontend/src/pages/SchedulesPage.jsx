@@ -1,13 +1,17 @@
-
 import { useState, useEffect } from "react"
-import { Box, Card, CardContent, CircularProgress, Typography, Chip, Button } from "@mui/material"
+import { 
+  Box, Card, CardContent, CircularProgress, Typography, Chip, Button, 
+  Dialog, DialogTitle, DialogContent, IconButton 
+} from "@mui/material"
 import AddIcon from "@mui/icons-material/Add"
 import EditIcon from "@mui/icons-material/Edit"
 import DeleteIcon from "@mui/icons-material/Delete"
-import ArrowBackIcon from "@mui/icons-material/ArrowBack"
+import CloseIcon from "@mui/icons-material/Close" 
+
 import { scheduleService, routeService, busService, driverService } from "../services/api"
 import ScheduleDialog from "../components/ScheduleDialog"
 import MapComponent from "../components/MapComponent"
+import '../styles/admin.css'
 
 const SchedulesPage = () => {
   const [schedules, setSchedules] = useState([])
@@ -18,7 +22,8 @@ const SchedulesPage = () => {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedSchedule, setSelectedSchedule] = useState(null)
 
-  const [viewMode, setViewMode] = useState("TABLE") // 'TABLE' or 'MAP'
+  // State cho bản đồ
+  const [viewMode, setViewMode] = useState("TABLE") 
   const [selectedScheduleForMap, setSelectedScheduleForMap] = useState(null)
   const [routeDataForMap, setRouteDataForMap] = useState(null)
   const [loadingMap, setLoadingMap] = useState(false)
@@ -39,14 +44,17 @@ const SchedulesPage = () => {
 
       const schData = Array.isArray(schRes.data) ? schRes.data : schRes.data?.data || []
       const routesData = Array.isArray(routeRes.data) ? routeRes.data : routeRes.data?.data || []
-      const busesData = Array.isArray(busRes.data) ? busRes.data : busRes.data?.data || []
-      const driversData = Array.isArray(driverRes.data) ? driverRes.data : driverRes.data?.data || []
+      const rawBuses = Array.isArray(busRes.data) ? busRes.data : busRes.data?.data || []
+      const rawDrivers = Array.isArray(driverRes.data) ? driverRes.data : driverRes.data?.data || []
+
+      const activeBuses = rawBuses.filter(b => b.trangThai === 1 || b.trangThai === 'Hoạt động');
+      const activeDrivers = rawDrivers.filter(d => d.trangThai === 1 || d.trangThai === 'Hoạt động' || d.trangThai === 'Đang hoạt động');
 
       setSchedules(schData)
       setAuxData({
         routes: routesData,
-        buses: busesData,
-        drivers: driversData,
+        buses: activeBuses,
+        drivers: activeDrivers,
       })
     } catch (error) {
       console.error("Load failed", error)
@@ -69,7 +77,7 @@ const SchedulesPage = () => {
   const handleViewMap = async (schedule) => {
     setLoadingMap(true)
     setSelectedScheduleForMap(schedule)
-    setViewMode("MAP")
+    setViewMode("MAP") 
 
     try {
       if (schedule.idTuyenDuong || schedule.idTuyen) {
@@ -131,71 +139,40 @@ const SchedulesPage = () => {
     if (!timeString) return "--:--"
     if (timeString.includes("T")) {
       const date = new Date(timeString)
-      const hh = date.getHours().toString().padStart(2, "0")
-      const mm = date.getMinutes().toString().padStart(2, "0")
-      return `${hh}:${mm}`
+      return `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`
     }
     return timeString.substring(0, 5)
   }
 
-  if (viewMode === "MAP" && selectedScheduleForMap) {
-    const stops = routeDataForMap?.diemDung || []
-    const currentStopIdx = (selectedScheduleForMap.thuTuTramHienTai || 1) - 1
-    const currentStop = stops[currentStopIdx]
-    const busPosition = currentStop ? [currentStop.viDo, currentStop.kinhDo] : [10.762, 106.66]
+  const renderStatus = (item) => {
+    const status = item.trangThaiDiChuyen; 
+    if (status === 2 || item.trangThai === 1) return <span className="status-badge status-completed">Đã hoàn thành</span>;
+    if (status === 1) return <span className="status-badge status-running">Đang chạy</span>;
+    return <span className="status-badge status-pending">Chưa khởi hành</span>;
+  };
 
-    return (
-      <Box sx={{ height: "100vh", display: "flex", flexDirection: "column", bgcolor: "#000000" }}>
-        <Box
-          sx={{
-            p: 1.5,
-            bgcolor: "#1e1e1e",
-            color: "#fff",
-            display: "flex",
-            alignItems: "center",
-            boxShadow: 3,
-            zIndex: 10,
-          }}
-        >
-          <Button startIcon={<ArrowBackIcon />} onClick={handleBackToList} sx={{ color: "#fff" }}>
-            Trở về
-          </Button>
-          <Typography variant="subtitle1" sx={{ ml: 2, fontWeight: "bold" }}>
-            {selectedScheduleForMap.tenTuyen} - {formatDate(selectedScheduleForMap.ngayChay)}
-          </Typography>
-        </Box>
-
-        <Box sx={{ flex: 1, position: "relative" }}>
-          {loadingMap ? (
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "100%",
-                bgcolor: "#121212",
-              }}
-            >
-              <CircularProgress />
-            </Box>
-          ) : (
-            <MapComponent
-              center={busPosition}
-              stops={stops}
-              buses={
-                selectedScheduleForMap.trangThaiDiChuyen === 1
-                  ? [{ latitude: busPosition[0], longitude: busPosition[1] }]
-                  : []
-              }
-            />
-          )}
-        </Box>
-      </Box>
-    )
+  // Dữ liệu map
+  let mapProps = { center: [10.762, 106.66], stops: [], buses: [] };
+  if (viewMode === "MAP" && selectedScheduleForMap && routeDataForMap) {
+      const stops = routeDataForMap.diemDung || [];
+      const currentStopIdx = (selectedScheduleForMap.thuTuTramHienTai || 1) - 1;
+      const currentStop = stops[currentStopIdx];
+      const centerPosition = currentStop ? [currentStop.viDo, currentStop.kinhDo] : [10.762, 106.66];
+      
+      mapProps = {
+          center: centerPosition,
+          stops: stops,
+          buses: selectedScheduleForMap.trangThaiDiChuyen === 1 
+              ? [{ latitude: centerPosition[0], longitude: centerPosition[1] }] 
+              : []
+      };
   }
 
+  // --- ĐÂY LÀ PHẦN RENDER GIAO DIỆN CHÍNH ---
+  // Chú ý: Không có đoạn if(viewMode === 'MAP') return ... ở đây nữa
   return (
     <Box sx={{ p: 3 }}>
+      {/* HEADER: Thêm chữ (NEW) để kiểm tra code đã ăn chưa */}
       <div className="admin-page-header">
         <div>
           <h1 className="admin-page-title">Quản lý lịch trình</h1>
@@ -211,9 +188,7 @@ const SchedulesPage = () => {
       <Card sx={{ backgroundColor: "transparent", boxShadow: "none" }}>
         <CardContent sx={{ p: 0 }}>
           {loading ? (
-            <Box sx={{ display: "flex", justifyContent: "center", py: 5 }}>
-              <CircularProgress />
-            </Box>
+            <Box sx={{ display: "flex", justifyContent: "center", py: 5 }}><CircularProgress /></Box>
           ) : (
             <div className="admin-table-container">
               <table className="admin-table">
@@ -225,67 +200,35 @@ const SchedulesPage = () => {
                     <th>Xe Buýt</th>
                     <th style={{ textAlign: "center" }}>Bắt đầu</th>
                     <th style={{ textAlign: "center" }}>Kết thúc</th>
+                    <th style={{ textAlign: "center" }}>Trạng thái</th>
                     <th style={{ textAlign: "right" }}>Hành động</th>
                   </tr>
                 </thead>
                 <tbody>
                   {Array.isArray(schedules) && schedules.length > 0 ? (
                     schedules.map((sch, index) => (
-                      <tr
-                        key={sch.idLichTrinh || sch.id || index}
-                        onClick={() => handleViewMap(sch)}
+                      <tr 
+                        key={sch.idLichTrinh || sch.id || index} 
+                        onClick={() => handleViewMap(sch)} 
                         style={{ cursor: "pointer" }}
                       >
                         <td>{formatDate(sch.ngayChay || sch.ngayThucHien)}</td>
-
                         <td style={{ fontWeight: 600 }}>{sch.tenTuyen || sch.idTuyen || "Chưa cập nhật"}</td>
-
                         <td>{sch.tenTaiXe || sch.hoTenTaiXe || "Chưa phân công"}</td>
-
-                        <td>
-                          <Chip
-                            label={sch.bienSoXe || sch.bienSo || "N/A"}
-                            size="small"
-                            sx={{ bgcolor: "rgba(255,255,255,0.05)", color: "#fff", border: "1px solid #334155" }}
-                          />
-                        </td>
-
-                        <td style={{ textAlign: "center" }}>
-                          <span
-                            className="chip-active"
-                            style={{ backgroundColor: "#0f172a", border: "1px solid #1e293b" }}
-                          >
-                            {formatTime(sch.thoiGianBatDau || sch.gioKhoiHanh)}
-                          </span>
-                        </td>
-
-                        <td style={{ textAlign: "center" }}>
-                          <span
-                            className="chip-inactive"
-                            style={{ backgroundColor: "#0f172a", border: "1px solid #1e293b", color: "#94a3b8" }}
-                          >
-                            {formatTime(sch.thoiGianKetThuc)}
-                          </span>
-                        </td>
-
+                        <td><Chip label={sch.bienSoXe || sch.bienSo || "N/A"} size="small" sx={{ bgcolor: "rgba(255,255,255,0.05)", color: "#fff", border: "1px solid #334155" }} /></td>
+                        <td style={{ textAlign: "center" }}><span className="chip-active" style={{ backgroundColor: "#0f172a", border: "1px solid #1e293b" }}>{formatTime(sch.thoiGianBatDau || sch.gioKhoiHanh)}</span></td>
+                        <td style={{ textAlign: "center" }}><span className="chip-inactive" style={{ backgroundColor: "#0f172a", border: "1px solid #1e293b", color: "#94a3b8" }}>{formatTime(sch.thoiGianKetThuc)}</span></td>
+                        <td style={{ textAlign: "center" }}>{renderStatus(sch)}</td>
                         <td onClick={(e) => e.stopPropagation()}>
                           <div className="admin-action-btns">
-                            <button className="admin-btn-edit" onClick={() => handleEdit(sch)}>
-                              <EditIcon sx={{ fontSize: 16 }} /> Sửa
-                            </button>
-                            <button className="admin-btn-delete" onClick={() => handleDelete(sch.idLichTrinh)}>
-                              <DeleteIcon sx={{ fontSize: 16 }} /> Xóa
-                            </button>
+                            <button className="admin-btn-edit" onClick={() => handleEdit(sch)}><EditIcon sx={{ fontSize: 16 }} /></button>
+                            <button className="admin-btn-delete" onClick={() => handleDelete(sch.idLichTrinh)}><DeleteIcon sx={{ fontSize: 16 }} /></button>
                           </div>
                         </td>
                       </tr>
                     ))
                   ) : (
-                    <tr>
-                      <td colSpan="7" style={{ textAlign: "center", padding: "20px", color: "#94a3b8" }}>
-                        Không có lịch trình nào.
-                      </td>
-                    </tr>
+                    <tr><td colSpan="8" style={{ textAlign: "center", padding: "20px", color: "#94a3b8" }}>Không có lịch trình nào.</td></tr>
                   )}
                 </tbody>
               </table>
@@ -301,6 +244,39 @@ const SchedulesPage = () => {
         data={auxData}
         initialData={selectedSchedule}
       />
+
+      {/* --- DIALOG BẢN ĐỒ (Popup) --- */}
+      <Dialog 
+        open={viewMode === "MAP"} 
+        onClose={handleBackToList}
+        maxWidth="md" // Đã chỉnh nhỏ lại thành MD để dễ phân biệt
+        fullWidth
+        scroll="paper"
+      >
+        <DialogTitle sx={{ m: 0, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: '#1e293b', color: 'white' }}>
+            <Typography variant="h6">
+                {selectedScheduleForMap ? `Lộ trình: ${selectedScheduleForMap.tenTuyen}` : "Chi tiết"}
+            </Typography>
+            <IconButton onClick={handleBackToList} sx={{ color: 'white' }}>
+                <CloseIcon />
+            </IconButton>
+        </DialogTitle>
+        
+        <DialogContent dividers sx={{ p: 0, height: '500px', bgcolor: '#0f172a', position: 'relative' }}>
+            {loadingMap ? (
+                <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
+                    <CircularProgress />
+                </Box>
+            ) : (
+                <MapComponent
+                    center={mapProps.center}
+                    stops={mapProps.stops}
+                    buses={mapProps.buses}
+                />
+            )}
+        </DialogContent>
+      </Dialog>
+
     </Box>
   )
 }
