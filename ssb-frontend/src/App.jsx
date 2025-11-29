@@ -2,7 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { CircularProgress, Box } from '@mui/material';
-
+import IncidentsPage from './pages/IncidentsPage';
 // --- 1. LAYOUT & AUTH ---
 import Layout from './components/Layout';
 import Login from './pages/Login';
@@ -84,6 +84,8 @@ function App() {
             <Route path="buses" element={<ProtectedRoute allowedRoles={['QUAN_LY']}><BusesPage /></ProtectedRoute>} />
             <Route path="schedules" element={<ProtectedRoute allowedRoles={['QUAN_LY']}><SchedulesPage /></ProtectedRoute>} />
             <Route path="profile" element={<ProtectedRoute allowedRoles={['QUAN_LY']}><ProfilePage /></ProtectedRoute>} />
+            {/* <Route path="reports" element={<ProtectedRoute allowedRoles={['QUAN_LY']}><ReportsPage /></ProtectedRoute>} /> */}
+            <Route path="incidents" element={<ProtectedRoute allowedRoles={['QUAN_LY']}><IncidentsPage /></ProtectedRoute>} />
         </Route>
 
         {/* --- KHU VỰC TÀI XẾ --- */}

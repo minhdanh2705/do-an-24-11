@@ -105,3 +105,24 @@ export const unlinkStudentFromParent = async (req, res) => {
         res.json({ success: true, message: 'Hủy liên kết thành công' });
     } catch (e) { res.status(500).json({success: false, message: e.message}); }
 };
+// --- THÊM VÀO CUỐI FILE parent-controller.js ---
+
+export const getNotifications = async (req, res) => {
+    try {
+        const { id } = req.params; // idPhuHuynh
+        const pool = await poolPromise;
+        
+        // Lấy thông báo của phụ huynh này, sắp xếp mới nhất lên đầu
+        const result = await pool.request()
+            .input('pid', sql.Int, id)
+            .query(`
+                SELECT * FROM THONGBAO 
+                WHERE idPhuHuynh = @pid 
+                ORDER BY thoiGian DESC
+            `);
+            
+        res.json({ success: true, data: result.recordset });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};

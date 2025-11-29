@@ -64,6 +64,7 @@ export const parentService = {
   linkStudent: (parentId, studentId) => api.post(`/parents/${parentId}/students`, { studentId }),
   unlinkStudent: (parentId, studentId) => api.delete(`/parents/${parentId}/students/${studentId}`),
   getStudents: (parentId) => api.get(`/parents/${parentId}/students`),
+  getNotifications: (id) => api.get(`/parents/${id}/notifications`),
 }
 
 // Schedule API
@@ -100,4 +101,10 @@ export const attendanceService = {
   mark: (data) => api.put('/attendance', data),
 };
 
+// Incident API
+export const incidentService = {
+  getAll: () => api.get('/incidents'),
+  create: (data) => api.post('/incidents', data),
+  updateStatus: (id, status) => api.put(`/incidents/${id}/status`, { trangThai: status }),
+}
 export default api

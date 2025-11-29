@@ -7,7 +7,7 @@ class Parent {
         const result = await pool.request()
             .input('parentId', sql.Int, parentId)
             .query(`
-                SELECT 
+                SELECT DISTINCT  -- <--- THÊM TỪ KHÓA NÀY ĐỂ CHỐNG TRÙNG LẶP
                     -- Thông tin Bé
                     h.idHocSinh, h.hoTen, h.lop, 
                     
@@ -30,7 +30,7 @@ class Parent {
                     tx.hoTen as tenTaiXe, tx.soDienThoai as sdtTaiXe,
                     xb.bienSo as bienSoXe,
                     
-                    -- Trạng thái điểm danh (0: Chưa, 1: Đã đón, 2: Đã trả)
+                    -- Trạng thái điểm danh (0: Chưa, 1: Đã đón, 2: Đã trả, 3: Vắng)
                     d.trangThai as trangThaiDiemDanh
 
                 FROM HOCSINH h
@@ -47,6 +47,7 @@ class Parent {
                 LEFT JOIN XEBUS xb ON lt.idXe = xb.idXe
                 
                 -- 3. Join Điểm danh để biết bé đã lên xe chưa
+                -- Quan trọng: Join theo cả idLichTrinh và idHocSinh để lấy đúng trạng thái của chuyến đó
                 LEFT JOIN DIEMDANH d ON lt.idLichTrinh = d.idLichTrinh AND h.idHocSinh = d.idHocSinh
 
                 WHERE h.idPhuHuynh = @parentId AND h.trangThai = 1

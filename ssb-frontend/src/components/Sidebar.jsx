@@ -9,7 +9,7 @@ import AssessmentIcon from '@mui/icons-material/Assessment'
 import SettingsIcon from '@mui/icons-material/Settings'
 import BadgeIcon from '@mui/icons-material/Badge';
 import { useAuth } from '../context/AuthContext'
-
+import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 const Sidebar = ({ open }) => {
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -25,6 +25,7 @@ const Sidebar = ({ open }) => {
         { text: 'Tài xế', icon: <BadgeIcon />, path: '/admin/drivers' },
         { text: 'Học sinh', icon: <PersonIcon />, path: '/admin/students' },
         { text: 'Phụ huynh', icon: <PersonIcon />, path: '/admin/parents' },
+        { text: 'Sự cố', icon: <ReportProblemIcon />, path: '/admin/incidents' },
         { text: 'Báo cáo', icon: <AssessmentIcon />, path: '/admin/reports' },
         { text: 'Profile', icon: <SettingsIcon />, path: '/admin/profile' },
       ]

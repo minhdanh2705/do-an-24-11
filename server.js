@@ -18,6 +18,7 @@ const httpServer = createServer(app);
 const io = new Server(httpServer, {
     cors: {
         origin: 'http://localhost:3000', // Port của Frontend (Parent/Driver App)
+        methods: ["GET", "POST", "PUT", "DELETE"],
         credentials: true
     }
 });

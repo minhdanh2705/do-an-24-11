@@ -10,7 +10,7 @@ import * as studentController from '../controllers/student-controller.js';
 import * as stopController from '../controllers/stop-controller.js';
 import { markAttendance } from '../controllers/attendance-controller.js';
 import { getStopsByRoute } from '../controllers/route-controller.js';
-
+import * as incidentController from '../controllers/incident-controller.js';
 const router = express.Router();
 
 // --- 1. AUTH ---
@@ -41,6 +41,7 @@ router.delete('/parents/:id', parentController.deleteParent);
 router.get('/parents/:id/students', parentController.getStudentsForParent);
 router.post('/parents/:id/students', parentController.linkStudentToParent);
 router.delete('/parents/:parentId/students/:studentId', parentController.unlinkStudentFromParent);
+router.get('/parents/:id/notifications', parentController.getNotifications);
 
 // --- 5. ROUTES ---
 router.get('/routes', routeController.getAllRoutes);
@@ -58,7 +59,7 @@ router.put('/schedules/:id', scheduleController.updateSchedule); // Sửa thông
 router.put('/schedules/:id/status', scheduleController.updateScheduleStatus); // Cập nhật trạng thái chạy
 router.delete('/schedules/:id', scheduleController.deleteSchedule); // Xóa
 router.put('/schedules/:scheduleId/students/:studentId/attendance', scheduleController.updateStudentAttendance); // Điểm danh
-
+router.put('/schedules/:id/current-stop', scheduleController.updateCurrentStop);
 // --- 7. STUDENTS ---
 router.get('/students', studentController.getAllStudents);
 router.get('/students/:id', studentController.getStudentById);
@@ -76,4 +77,8 @@ router.delete('/stops/:id', stopController.deleteStop);
 
 router.put('/attendance', markAttendance);
 
+// --- 9. INCIDENTS ---
+router.get('/incidents', incidentController.getAllIncidents); // Admin xem
+router.post('/incidents', incidentController.createIncident); // Driver gửi
+router.put('/incidents/:id/status', incidentController.updateIncidentStatus);
 export default router;
