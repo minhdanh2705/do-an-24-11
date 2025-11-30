@@ -4,10 +4,10 @@ dotenv.config();
 
 const config = {
     user: 'sa',
-    password: '123456',
-    server: 'DESKTOP-UKN1BR0',
-    database: 'CNPM',
-    port: 1435, 
+    password: '12345678',
+    server: 'localhost\\MTHANHDUY',
+    database: 'CNPMnew',
+    port: 1433, 
     options: {
         encrypt: false,
         trustServerCertificate: true,

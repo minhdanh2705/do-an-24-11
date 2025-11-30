@@ -26,7 +26,6 @@ const Sidebar = ({ open }) => {
         { text: 'Học sinh', icon: <PersonIcon />, path: '/admin/students' },
         { text: 'Phụ huynh', icon: <PersonIcon />, path: '/admin/parents' },
         { text: 'Sự cố', icon: <ReportProblemIcon />, path: '/admin/incidents' },
-        { text: 'Báo cáo', icon: <AssessmentIcon />, path: '/admin/reports' },
         { text: 'Profile', icon: <SettingsIcon />, path: '/admin/profile' },
       ]
     } else if (user?.role === 'TAI_XE') {
