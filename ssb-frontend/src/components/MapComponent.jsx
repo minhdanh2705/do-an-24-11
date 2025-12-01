@@ -19,9 +19,12 @@ const busIcon = new L.Icon({
 });
 
 // Thêm prop busRoute vào
-const MapComponent = ({ center, stops = [], busRoute = null, onBusArrived }) => {
+const MapComponent = ({ center, stops = [], busRoute = null, onBusArrived, currentBusPosition }) => {
   const validCenter = (center && center[0]) ? center : [10.762, 106.66];
-
+  // --- LOGIC MỚI: Xác định vị trí xe khi đứng yên ---
+  // 1. Nếu currentBusPosition được truyền vào (Parent mode): Dùng nó (nếu null thì ẩn xe).
+  // 2. Nếu không truyền (Driver mode cũ): Dùng center (vì bên Driver center chính là vị trí xe).
+  const busPos = currentBusPosition !== undefined ? currentBusPosition : validCenter;
   return (
     <MapContainer center={validCenter} zoom={13} style={{ height: "100%", width: "100%" }}>
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
@@ -48,9 +51,9 @@ const MapComponent = ({ center, stops = [], busRoute = null, onBusArrived }) => 
         </AnimatedBusMarker>
       )}
       
-      {/* Nếu không chạy (đứng yên) thì vẽ Marker thường ở điểm đầu */}
-      {!busRoute && stops.length > 0 && (
-         <Marker position={validCenter} icon={busIcon} opacity={0.5} />
+      {/* Nếu không chạy (đứng yên) thì vẽ Marker tại vị trí đã xác định */}
+      {!busRoute && busPos && (
+         <Marker position={busPos} icon={busIcon} opacity={0.5} />
       )}
 
     </MapContainer>

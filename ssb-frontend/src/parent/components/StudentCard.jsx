@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Accordion, AccordionSummary, AccordionDetails, Typography, Box, Button, Chip, Avatar, Divider, Alert, CircularProgress } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import DirectionsBusIcon from '@mui/icons-material/DirectionsBus';
@@ -12,6 +12,51 @@ export default function StudentCard({ student, isInitiallyExpanded = false }) {
   const [expanded, setExpanded] = useState(isInitiallyExpanded);
   const [routeData, setRouteData] = useState(null); 
   const [loadingMap, setLoadingMap] = useState(false);
+  // --- THÊM MỚI: State và Ref cho Animation ---
+  const [busRoute, setBusRoute] = useState(null); 
+  const prevStopIndexRef = useRef(student.thuTuTramHienTai || 0);
+
+  // 1. Effect theo dõi sự thay đổi trạm để tìm đường chạy xe
+  useEffect(() => {
+    // Chỉ chạy khi đã có lộ trình và xe đang di chuyển (trạng thái 1)
+    if (!routeData || !routeData.diemDung || student.trangThaiDiChuyen !== 1) return;
+
+    const currentIdx = (student.thuTuTramHienTai || 1) - 1; // Index hiện tại
+    const prevIdx = prevStopIndexRef.current - 1;           // Index cũ
+
+    // Nếu thấy xe tiến lên trạm mới (current > prev)
+    if (currentIdx > prevIdx && prevIdx >= 0) {
+        const startStop = routeData.diemDung[prevIdx];
+        const endStop = routeData.diemDung[currentIdx];
+
+        if (startStop && endStop) {
+            fetchRouteAndAnimate(startStop, endStop);
+        }
+    } else if (currentIdx === 0 && prevIdx !== 0) {
+        // Trường hợp reset (xe quay về đầu)
+        setBusRoute(null);
+    }
+
+    // Cập nhật lại trạm cũ
+    prevStopIndexRef.current = student.thuTuTramHienTai;
+  }, [student.thuTuTramHienTai, routeData, student.trangThaiDiChuyen]);
+
+  // 2. Hàm gọi API OSRM để lấy tọa độ đường đi thực tế
+  const fetchRouteAndAnimate = async (startNode, endNode) => {
+      try {
+          const url = `https://router.project-osrm.org/route/v1/driving/${startNode.kinhDo},${startNode.viDo};${endNode.kinhDo},${endNode.viDo}?overview=full&geometries=geojson`;
+          const res = await fetch(url);
+          const data = await res.json();
+
+          if (data.routes && data.routes.length > 0) {
+              // Đảo ngược [lng, lat] thành [lat, lng] cho Leaflet
+              const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+              setBusRoute(coords); 
+          }
+      } catch (e) {
+          console.error("Lỗi tìm đường animation:", e);
+      }
+  };
 
   const handleAccordionChange = (event, isExpanded) => {
       setExpanded(isExpanded);
@@ -94,6 +139,21 @@ export default function StudentCard({ student, isInitiallyExpanded = false }) {
       }
   }
 
+  // --- THÊM MỚI: Tính vị trí xe hiện tại để vẽ khi đứng yên ---
+  let currentBusPos = null;
+  if (trangThaiDiChuyen === 1 && routeData && routeData.diemDung) {
+      const currentStopIdx = (student.thuTuTramHienTai || 1) - 1;
+      const currentStop = routeData.diemDung[currentStopIdx];
+      if (currentStop) {
+          currentBusPos = [currentStop.viDo, currentStop.kinhDo];
+      }
+  } else if (!student.idLichTrinh) {
+      currentBusPos = null; // Không có lịch -> Ẩn xe
+  } else {
+      // Fallback: Dùng tạm vị trí đón nếu chưa load xong lộ trình
+      currentBusPos = [lat, lng];
+  }
+
   return (
     <Accordion 
         expanded={expanded} 
@@ -170,15 +230,25 @@ export default function StudentCard({ student, isInitiallyExpanded = false }) {
                             </Box>
                         ) : (
                             <MapComponent 
-                                key={`map-${student.idHocSinh}`} 
-                                center={[lat, lng]}
-                                // Truyền danh sách trạm lấy từ API (hoặc dùng tạm điểm đón nếu chưa load xong)
-                                stops={routeData?.diemDung || [{ viDo: lat, kinhDo: lng, tenDiemDung: student.tenDiemDon, thuTu: student.thuTuDiemDon }]}
-                                buses={busLocation}
-                                // THÊM 2 PROP MỚI: Để map biết trạm nào là của bé này
-                                userStopId={student.idDiemDon}
-                                userStatus={trangThaiDiemDanh}
-                            />
+                        key={`map-${student.idHocSinh}`} 
+                        center={[lat, lng]}
+
+                        // 1. Danh sách trạm (để vẽ đường màu xanh)
+                        stops={routeData?.diemDung || [{ viDo: lat, kinhDo: lng, tenDiemDung: student.tenDiemDon, thuTu: student.thuTuDiemDon }]}
+                        
+                        // 2. Animation: Truyền đường đi vào (lấy từ state busRoute)
+                        busRoute={busRoute} 
+
+                        // 3. Vị trí tĩnh: Truyền tọa độ xe khi đứng yên
+                        currentBusPosition={currentBusPos}
+
+                        // 4. Callback: Khi chạy xong animation -> set busRoute về null để xe hiện lại trạng thái tĩnh
+                        onBusArrived={() => setBusRoute(null)}
+
+                        // Các props khác giữ nguyên
+                        userStopId={student.idDiemDon}
+                        userStatus={trangThaiDiemDanh}
+                    />
                         )
                     ) : (
                         <Box sx={{height: '100%', display:'flex', alignItems:'center', justifyContent:'center', bgcolor:'#2c2c2c'}}>
