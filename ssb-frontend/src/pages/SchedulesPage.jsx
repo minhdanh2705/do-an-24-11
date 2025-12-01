@@ -10,7 +10,7 @@ import CloseIcon from "@mui/icons-material/Close"
 
 import { scheduleService, routeService, busService, driverService } from "../services/api"
 import ScheduleDialog from "../components/ScheduleDialog"
-import MapComponent from "../components/MapComponent"
+import ScheduleTrackingDialog from "../components/ScheduleTrackingDialog" // <--- THÊM DÒNG NÀY
 import '../styles/admin.css'
 
 const SchedulesPage = () => {
@@ -23,10 +23,9 @@ const SchedulesPage = () => {
   const [selectedSchedule, setSelectedSchedule] = useState(null)
 
   // State cho bản đồ
-  const [viewMode, setViewMode] = useState("TABLE") 
-  const [selectedScheduleForMap, setSelectedScheduleForMap] = useState(null)
-  const [routeDataForMap, setRouteDataForMap] = useState(null)
-  const [loadingMap, setLoadingMap] = useState(false)
+  // --- STATE MỚI CHO THEO DÕI LỘ TRÌNH ---
+  const [trackingOpen, setTrackingOpen] = useState(false);
+  const [trackingScheduleId, setTrackingScheduleId] = useState(null);
 
   useEffect(() => {
     loadAllData()
@@ -74,23 +73,11 @@ const SchedulesPage = () => {
     setDialogOpen(true)
   }
 
-  const handleViewMap = async (schedule) => {
-    setLoadingMap(true)
-    setSelectedScheduleForMap(schedule)
-    setViewMode("MAP") 
+const handleViewMap = (schedule) => {
+    setTrackingScheduleId(schedule.idLichTrinh);
+    setTrackingOpen(true);
+  };
 
-    try {
-      if (schedule.idTuyenDuong || schedule.idTuyen) {
-        const routeRes = await routeService.getById(schedule.idTuyenDuong || schedule.idTuyen)
-        const routeData = routeRes.data?.data || routeRes.data
-        setRouteDataForMap(routeData)
-      }
-    } catch (error) {
-      console.error("Error loading map data:", error)
-    } finally {
-      setLoadingMap(false)
-    }
-  }
 
   const handleBackToList = () => {
     setViewMode("TABLE")
@@ -151,22 +138,8 @@ const SchedulesPage = () => {
     return <span className="status-badge status-pending">Chưa khởi hành</span>;
   };
 
-  // Dữ liệu map
-  let mapProps = { center: [10.762, 106.66], stops: [], buses: [] };
-  if (viewMode === "MAP" && selectedScheduleForMap && routeDataForMap) {
-      const stops = routeDataForMap.diemDung || [];
-      const currentStopIdx = (selectedScheduleForMap.thuTuTramHienTai || 1) - 1;
-      const currentStop = stops[currentStopIdx];
-      const centerPosition = currentStop ? [currentStop.viDo, currentStop.kinhDo] : [10.762, 106.66];
-      
-      mapProps = {
-          center: centerPosition,
-          stops: stops,
-          buses: selectedScheduleForMap.trangThaiDiChuyen === 1 
-              ? [{ latitude: centerPosition[0], longitude: centerPosition[1] }] 
-              : []
-      };
-  }
+ 
+  
 
   // --- ĐÂY LÀ PHẦN RENDER GIAO DIỆN CHÍNH ---
   // Chú ý: Không có đoạn if(viewMode === 'MAP') return ... ở đây nữa
@@ -245,37 +218,12 @@ const SchedulesPage = () => {
         initialData={selectedSchedule}
       />
 
-      {/* --- DIALOG BẢN ĐỒ (Popup) --- */}
-      <Dialog 
-        open={viewMode === "MAP"} 
-        onClose={handleBackToList}
-        maxWidth="md" // Đã chỉnh nhỏ lại thành MD để dễ phân biệt
-        fullWidth
-        scroll="paper"
-      >
-        <DialogTitle sx={{ m: 0, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: '#1e293b', color: 'white' }}>
-            <Typography variant="h6">
-                {selectedScheduleForMap ? `Lộ trình: ${selectedScheduleForMap.tenTuyen}` : "Chi tiết"}
-            </Typography>
-            <IconButton onClick={handleBackToList} sx={{ color: 'white' }}>
-                <CloseIcon />
-            </IconButton>
-        </DialogTitle>
-        
-        <DialogContent dividers sx={{ p: 0, height: '500px', bgcolor: '#0f172a', position: 'relative' }}>
-            {loadingMap ? (
-                <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
-                    <CircularProgress />
-                </Box>
-            ) : (
-                <MapComponent
-                    center={mapProps.center}
-                    stops={mapProps.stops}
-                    buses={mapProps.buses}
-                />
-            )}
-        </DialogContent>
-      </Dialog>
+      {/* --- THAY THẾ DIALOG BẢN ĐỒ CŨ BẰNG COMPONENT MỚI --- */}
+      <ScheduleTrackingDialog 
+        open={trackingOpen}
+        onClose={() => setTrackingOpen(false)}
+        scheduleId={trackingScheduleId}
+      />
 
     </Box>
   )

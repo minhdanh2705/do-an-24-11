@@ -192,11 +192,12 @@ const DriverDashboard = () => {
       await fetchRouteAndRun(currentStop, nextStop);
 
       try {
+        console.log("Đang cập nhật trạm lên server...", nextIdx + 1);
         // Cập nhật DB (Chuẩn bị tới trạm kế)
         await api.put(`/schedules/${activeSchedule.idLichTrinh}/current-stop`, {
           stopIndex: nextIdx + 1, 
           stopName: nextStop.tenDiemDung,
-        })
+        });
       } catch (err) { console.error(err) }
     } else {
       // Logic kết thúc
