@@ -62,7 +62,7 @@ const DriversPage = () => {
         loadDrivers() 
       } catch (error) {
         console.error("Lỗi khi xóa:", error)
-        alert("Không thể xóa: " + (error.response?.data?.message || error.message))
+        alert((error.response?.data?.message || error.message))
       }
     }
   }

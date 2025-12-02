@@ -66,12 +66,21 @@ export const updateDriver = async (req, res) => {
 };
 
 // 5. Xóa tài xế
+// driver-controller.js
+
 export const deleteDriver = async (req, res) => {
     try {
         const id = parseInt(req.params.id);
         const result = await Driver.remove(id);
         res.json({ success: true, message: result.message });
     } catch (err) {
+        // --- THÊM ĐOẠN NÀY ĐỂ LỌC LỖI CẢNH BÁO ---
+        if (err.message.includes('CẢNH BÁO')) {
+            // Trả về 400 (Bad Request) và giữ nguyên thông báo, KHÔNG thêm chữ "Lỗi server"
+            return res.status(400).json({ success: false, message: err.message });
+        }
+        
+        // Các lỗi khác thì mới báo lỗi server 500
         res.status(500).json({ success: false, message: 'Lỗi server: ' + err.message });
     }
 };

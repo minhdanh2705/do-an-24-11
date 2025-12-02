@@ -107,4 +107,6 @@ export const incidentService = {
   create: (data) => api.post('/incidents', data),
   updateStatus: (id, status) => api.put(`/incidents/${id}/status`, { trangThai: status }),
 }
+
+
 export default api

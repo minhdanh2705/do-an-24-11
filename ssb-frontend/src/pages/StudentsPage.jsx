@@ -71,16 +71,27 @@ const StudentsPage = () => {
   }
 
   const handleDelete = async (id) => {
-    if (window.confirm("Bạn có chắc muốn xóa học sinh này?")) {
-      try {
-        await studentService.delete(id)
-        loadData()
-      } catch (error) {
-        console.error("Failed to delete student:", error)
-        alert("Không thể xóa học sinh: " + (error.response?.data?.message || error.message))
-      }
+    if (!window.confirm("Bạn có chắc chắn muốn xóa học sinh này không?")) return;
+
+    try {
+        await studentService.delete(id);
+        
+        // Cập nhật giao diện (loại bỏ học sinh vừa xóa khỏi danh sách)
+        setStudents((prev) => prev.filter((st) => st.idHocSinh !== id));
+        alert("Xóa thành công!");
+
+    } catch (error) {
+        console.log("Lỗi xóa học sinh:", error);
+
+        // HIỂN THỊ THÔNG BÁO TỪ BACKEND
+        if (error.response && error.response.data && error.response.data.message) {
+            // Sẽ hiện: "CẢNH BÁO: Học sinh đang nằm trong danh sách..."
+            alert(error.response.data.message); 
+        } else {
+            alert("Có lỗi xảy ra, vui lòng thử lại.");
+        }
     }
-  }
+};
 
   const handleSave = async (studentData) => {
     try {

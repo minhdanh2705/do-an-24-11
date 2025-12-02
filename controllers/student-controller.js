@@ -1,22 +1,10 @@
-import { sql, poolPromise } from '../config/database.js';
+import Student from '../models/student-model.js'; // Chỉ import 1 lần duy nhất ở đây
 
-// 1. Lấy danh sách học sinh (kèm thông tin phụ huynh, tuyến, trạm)
+// 1. Lấy danh sách học sinh (Đã lọc trangThai = 1 trong Model)
 export const getAllStudents = async (req, res) => {
     try {
-        const pool = await poolPromise;
-        const result = await pool.request().query(`
-            SELECT 
-                h.*, 
-                p.hoTen as tenPhuHuynh, p.soDienThoai,
-                t.tenTuyen,
-                d.tenDiemDung as tenDiemDon
-            FROM HOCSINH h
-            LEFT JOIN PHUHUYNH p ON h.idPhuHuynh = p.idPhuHuynh
-            LEFT JOIN TUYENDUONG t ON h.idTuyen = t.idTuyenDuong
-            LEFT JOIN DIEMDUNG d ON h.idDiemDon = d.idDiemDung
-            ORDER BY h.idHocSinh DESC
-        `);
-        res.json({ success: true, data: result.recordset });
+        const data = await Student.getAll();
+        res.json({ success: true, data });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
@@ -26,102 +14,70 @@ export const getAllStudents = async (req, res) => {
 export const getStudentById = async (req, res) => {
     try {
         const { id } = req.params;
-        const pool = await poolPromise;
-        const result = await pool.request()
-            .input('id', sql.Int, id)
-            .query('SELECT * FROM HOCSINH WHERE idHocSinh = @id');
-        res.json({ success: true, data: result.recordset[0] });
+        const student = await Student.getById(id);
+        if (!student) {
+            return res.status(404).json({ success: false, message: 'Không tìm thấy học sinh' });
+        }
+        res.json({ success: true, data: student });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
 };
 
-// 3. Tạo học sinh mới (Đã xử lý NULL cho khóa ngoại)
+// 3. Tạo học sinh mới
 export const createStudent = async (req, res) => {
     try {
-        const { hoTen, lop, idPhuHuynh, idTuyen, idDiemDon, trangThai } = req.body;
-        
-        // --- LOGIC QUAN TRỌNG: Chuyển đổi rỗng hoặc 0 thành NULL ---
-        // Nếu giá trị gửi lên là "" hoặc 0 -> Lưu NULL vào database
-        const valPhuHuynh = (idPhuHuynh && idPhuHuynh != 0) ? parseInt(idPhuHuynh) : null;
-        const valTuyen = (idTuyen && idTuyen != 0) ? parseInt(idTuyen) : null;
-        const valDiemDon = (idDiemDon && idDiemDon != 0) ? parseInt(idDiemDon) : null;
-
-        const pool = await poolPromise;
-        await pool.request()
-            .input('hoTen', sql.NVarChar, hoTen)
-            .input('lop', sql.VarChar, lop)
-            .input('idPhuHuynh', sql.Int, valPhuHuynh)
-            .input('idTuyen', sql.Int, valTuyen)
-            .input('idDiemDon', sql.Int, valDiemDon)
-            .input('trangThai', sql.Int, trangThai || 1)
-            .query(`
-                INSERT INTO HOCSINH (hoTen, lop, idPhuHuynh, idTuyen, idDiemDon, trangThai) 
-                VALUES (@hoTen, @lop, @idPhuHuynh, @idTuyen, @idDiemDon, @trangThai)
-            `);
-            
-        res.json({ success: true, message: 'Thêm học sinh thành công' });
+        const newStudent = await Student.create(req.body);
+        res.status(201).json({ success: true, message: 'Thêm học sinh thành công', data: newStudent });
     } catch (err) {
         res.status(500).json({ success: false, message: "Lỗi Database: " + err.message });
     }
 };
 
-// 4. Cập nhật học sinh (Đã xử lý NULL cho khóa ngoại)
+// 4. Cập nhật học sinh
 export const updateStudent = async (req, res) => {
     try {
         const { id } = req.params;
-        const { hoTen, lop, idPhuHuynh, idTuyen, idDiemDon, trangThai } = req.body;
-
-        // --- LOGIC QUAN TRỌNG: Chuyển đổi rỗng hoặc 0 thành NULL ---
-        const valPhuHuynh = (idPhuHuynh && idPhuHuynh != 0) ? parseInt(idPhuHuynh) : null;
-        const valTuyen = (idTuyen && idTuyen != 0) ? parseInt(idTuyen) : null;
-        const valDiemDon = (idDiemDon && idDiemDon != 0) ? parseInt(idDiemDon) : null;
-
-        const pool = await poolPromise;
-        await pool.request()
-            .input('id', sql.Int, id)
-            .input('hoTen', sql.NVarChar, hoTen)
-            .input('lop', sql.VarChar, lop)
-            .input('idPhuHuynh', sql.Int, valPhuHuynh)
-            .input('idTuyen', sql.Int, valTuyen)
-            .input('idDiemDon', sql.Int, valDiemDon)
-            .input('trangThai', sql.Int, trangThai)
-            .query(`
-                UPDATE HOCSINH 
-                SET hoTen = @hoTen, 
-                    lop = @lop, 
-                    idPhuHuynh = @idPhuHuynh, 
-                    idTuyen = @idTuyen, 
-                    idDiemDon = @idDiemDon, 
-                    trangThai = @trangThai 
-                WHERE idHocSinh = @id
-            `);
-
-        res.json({ success: true, message: 'Cập nhật thành công' });
+        const result = await Student.update(id, req.body);
+        res.json({ success: true, message: result.message });
     } catch (err) {
+        if (err.message === 'Không tìm thấy học sinh') {
+            return res.status(404).json({ success: false, message: err.message });
+        }
         res.status(500).json({ success: false, message: "Lỗi Database: " + err.message });
     }
 };
 
-// 5. Xóa học sinh (Xóa mềm: chuyển trạng thái = 0)
+// 5. Xóa học sinh (Gọi Model để kiểm tra ràng buộc trước khi xóa mềm)
 export const deleteStudent = async (req, res) => {
     try {
         const { id } = req.params;
-        const pool = await poolPromise;
-        await pool.request()
-            .input('id', sql.Int, id)
-            .query('UPDATE HOCSINH SET trangThai = 0 WHERE idHocSinh = @id');
-            
-        res.json({ success: true, message: 'Đã xóa học sinh' });
+        const result = await Student.remove(id);
+        res.json({ success: true, message: result.message });
     } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
+        console.error("Lỗi xóa học sinh:", err.message);
+
+        // Bắt lỗi CẢNH BÁO (Ràng buộc dữ liệu) -> Trả về 400
+        if (err.message.includes('CẢNH BÁO') || err.message.includes('REFERENCE')) {
+             return res.status(400).json({ success: false, message: err.message });
+        }
+        
+        // Lỗi không tìm thấy -> Trả về 404
+        if (err.message.includes('Không tìm thấy')) {
+             return res.status(404).json({ success: false, message: err.message });
+        }
+
+        // Các lỗi khác -> Trả về 500
+        res.status(500).json({ success: false, message: 'Lỗi server: ' + err.message });
     }
 };
 
-// 6. API phụ: Lấy phụ huynh của học sinh (Tránh lỗi route undefined)
+// 6. Lấy phụ huynh của học sinh (Nếu cần dùng)
 export const getParentsForStudent = async (req, res) => {
     try {
-        res.json({ success: true, data: [] });
+        const { id } = req.params;
+        const parents = await Student.getLinkedParents(id);
+        res.json({ success: true, data: parents });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }

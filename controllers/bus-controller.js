@@ -46,14 +46,29 @@ export const updateBus = async (req, res) => {
     }
 };
 
+// controllers/bus-controller.js
+
 export const deleteBus = async (req, res) => {
     try {
         const id = parseInt(req.params.id);
         const deletedBus = await Bus.remove(id);
-        res.json({ success: true, message: 'Đã vô hiệu hóa xe bus thành công!', data: deletedBus });
+        res.json({ success: true, message: 'Đã vô hiệu hóa xe bus thành công!' });
     } catch (err) {
-        if (err.message.includes('Không tìm thấy')) return res.status(404).json({ success: false, message: err.message });
-        if (err.message.includes('đang được sử dụng')) return res.status(400).json({ success: false, message: err.message });
+        console.error("Lỗi xóa Bus:", err.message); 
+
+        // Nếu gặp chữ "CẢNH BÁO", trả về lỗi 400 kèm message
+        if (err.message.includes('CẢNH BÁO')) {
+             return res.status(400).json({ 
+                 success: false, 
+                 message: err.message // <--- Truyền dòng chữ Cảnh báo xuống Frontend
+             });
+        }
+        
+        // Các lỗi khác
+        if (err.message.includes('Không tìm thấy')) {
+             return res.status(404).json({ success: false, message: err.message });
+        }
+        
         res.status(500).json({ success: false, message: 'Lỗi server: ' + err.message });
     }
 };

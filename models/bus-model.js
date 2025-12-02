@@ -5,7 +5,7 @@ class Bus {
     static async getAll() {
         const db = await pool;
         // Thêm ORDER BY idXe DESC để xe mới thêm hiện lên đầu (tuỳ chọn)
-        const result = await db.request().query('SELECT * FROM XEBUS ORDER BY idXe DESC'); 
+        const result = await db.request().query('SELECT * FROM XEBUS WHERE trangThai = 1 ORDER BY idXe DESC'); 
         return result.recordset;
     }
 
@@ -66,25 +66,39 @@ class Bus {
         return result.recordset[0];
     }
 
+    // models/bus-model.js
+
+    // models/bus-model.js
+
+// models/bus-model.js
+
+    // models/bus-model.js
+
     static async remove(id) {
         const db = await pool;
-        
-        // SỬA 3: Bỏ điều kiện 'AND trangThai = 1'. 
-        // Cho phép xoá dù xe đang ở trạng thái nào, miễn là tìm thấy ID.
-        const checkResult = await db.request().input('id', sql.Int, id)
-            .query(`SELECT idXe FROM XEBUS WHERE idXe = @id`);
 
-        if (!checkResult.recordset.length) throw new Error('Không tìm thấy xe bus');
+        // Kiểm tra xe có đang chạy (trangThaiDiChuyen != 2)
+        // Bao gồm cả NULL (mới tạo chưa chạy) và 0, 1
+        const activeCheck = await db.request().input('id', sql.Int, id)
+            .query(`
+                SELECT COUNT(*) as count 
+                FROM LICHTRINH 
+                WHERE idXe = @id AND (trangThaiDiChuyen IS NULL OR trangThaiDiChuyen != 2)
+            `);
 
-        const usageCheck = await db.request().input('id', sql.Int, id)
-            .query(`SELECT COUNT(*) as count FROM LICHTRINH WHERE idXe = @id AND trangThai NOT IN ('DONE', 'CANCELLED')`);
+        // CHẶN XÓA
+        if (activeCheck.recordset[0].count > 0) {
+            // --- ĐÂY LÀ DÒNG BẠN MUỐN HIỂN THỊ ---
+            throw new Error('CẢNH BÁO: Xe đang thực hiện lịch trình. Không thể xóa ngay lúc này!');
+        }
 
-        if (usageCheck.recordset[0].count > 0) throw new Error('Không thể xóa xe đang sử dụng');
-
-        // Soft delete: Chuyển trạng thái về 0 (Ngưng hoạt động)
+        // Nếu rảnh thì xóa mềm
         const result = await db.request().input('id', sql.Int, id)
             .query(`UPDATE XEBUS SET trangThai = 0 OUTPUT INSERTED.* WHERE idXe = @id`);
-        return result.recordset[0];
+
+        if (!result.recordset.length) throw new Error('Không tìm thấy xe bus');
+
+        return { message: 'Đã xóa xe bus thành công' };
     }
 }
 export default Bus;

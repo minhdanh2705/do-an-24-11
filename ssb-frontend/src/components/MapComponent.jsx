@@ -20,6 +20,13 @@ const busIcon = new L.Icon({
 
 // Thêm prop busRoute vào
 const MapComponent = ({ center, stops = [], busRoute = null, onBusArrived, currentBusPosition }) => {
+  console.log("DEBUG MAP:", {
+     hasStops: stops && stops.length > 0, // Kiểm tra có stops không
+     stopsData: stops,                    // In ra nội dung stops
+     center: center                       // Xem center đang ở đâu
+  }); 
+  // ------------------------------
+
   const validCenter = (center && center[0]) ? center : [10.762, 106.66];
   // --- LOGIC MỚI: Xác định vị trí xe khi đứng yên ---
   // 1. Nếu currentBusPosition được truyền vào (Parent mode): Dùng nó (nếu null thì ẩn xe).

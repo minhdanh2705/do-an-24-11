@@ -5,6 +5,7 @@ class Driver {
         const pool = await poolPromise;
         const result = await pool.request().query(`
             SELECT * FROM TAIXE 
+            WHERE trangThai = 1
             ORDER BY idTaiXe DESC
         `);
         return result.recordset;
@@ -85,13 +86,50 @@ class Driver {
         return { id, ...data };
     }
 
+    // models/driver-model.js
+
+// models/driver-model.js
+
+    // models/driver-model.js
+
     static async remove(id) {
         const pool = await poolPromise;
-        await pool.request()
-            .input('id', sql.Int, id)
-            .query('UPDATE TAIXE SET trangThai = 0 WHERE idTaiXe = @id');
+        const transaction = new sql.Transaction(pool);
+        
+        try {
+            await transaction.begin();
+
+            // 1. KIỂM TRA RÀNG BUỘC: Tài xế có đang lái không?
+            const activeCheck = await transaction.request().input('id', sql.Int, id)
+                .query(`
+                    SELECT COUNT(*) as count 
+                    FROM LICHTRINH 
+                    WHERE idTaiXe = @id AND trangThaiDiChuyen IN (0, 1)
+                `);
             
-        return { message: 'Đã vô hiệu hóa tài xế' };
+            // 2. Nếu đang bận -> BÁO LỖI
+            if(activeCheck.recordset[0].count > 0) {
+                throw new Error("CẢNH BÁO: Tài xế đang thực hiện lộ trình, không thể xóa ngay lúc này!");
+            }
+
+            // 3. Nếu rảnh -> Xóa mềm
+            // 3a. Khóa tài khoản
+            await transaction.request().input('id', sql.Int, id)
+                .query('UPDATE TAIKHOAN SET trangThai = 0 WHERE idTaiXe = @id');
+
+            // 3b. Ẩn thông tin
+            const result = await transaction.request().input('id', sql.Int, id)
+                .query('UPDATE TAIXE SET trangThai = 0 OUTPUT INSERTED.* WHERE idTaiXe = @id');
+
+            if (!result.recordset.length) throw new Error('Không tìm thấy tài xế');
+
+            await transaction.commit();
+            return { message: 'Đã xóa tài xế thành công' };
+
+        } catch (err) {
+            await transaction.rollback();
+            throw err; // Ném lỗi ra để Controller bắt được
+        }
     }
 }
 

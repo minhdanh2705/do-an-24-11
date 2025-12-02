@@ -36,31 +36,54 @@ class Route {
     }
 
     // Thêm vào class Route trong models/route-model.js
-    static async update(id, routeData) {
-        const { tenTuyen, moTa, khoangCach, thoiGianDuKien } = routeData;
-        const pool = await poolPromise;
+    // Trong route-model.js
 
-        // Kiểm tra xem tuyến có tồn tại không
-        const check = await pool.request().input('id', sql.Int, id).query("SELECT idTuyenDuong FROM TUYENDUONG WHERE idTuyenDuong = @id");
-        if (check.recordset.length === 0) throw new Error('Không tìm thấy tuyến xe');
+static async update(id, routeData) {
+    const { tenTuyen, moTa, khoangCach, thoiGianDuKien, diemDung } = routeData; // Lấy thêm diemDung
+    const pool = await poolPromise;
+    
+    // Dùng Transaction để đảm bảo tính toàn vẹn
+    const transaction = new sql.Transaction(pool);
+    await transaction.begin();
 
-        await pool.request()
+    try {
+        // 1. Update thông tin chung
+        await transaction.request()
             .input('id', sql.Int, id)
             .input('tenTuyen', sql.NVarChar, tenTuyen)
             .input('moTa', sql.NVarChar, moTa || '')
             .input('khoangCach', sql.Float, khoangCach || 0)
             .input('thoiGianDuKien', sql.Int, thoiGianDuKien || 0)
             .query(`
-            UPDATE TUYENDUONG 
-            SET tenTuyen = @tenTuyen, 
-                moTa = @moTa, 
-                khoangCach = @khoangCach, 
-                thoiGianDuKien = @thoiGianDuKien
-            WHERE idTuyenDuong = @id
-        `);
+                UPDATE TUYENDUONG 
+                SET tenTuyen = @tenTuyen, moTa = @moTa, khoangCach = @khoangCach, thoiGianDuKien = @thoiGianDuKien
+                WHERE idTuyenDuong = @id
+            `);
 
-        return { idTuyen: id, tenTuyen, moTa, khoangCach, thoiGianDuKien };
+        // 2. Xử lý Điểm dừng (Nếu có gửi danh sách mới)
+        if (diemDung && Array.isArray(diemDung)) {
+            // a. Xóa hết điểm dừng cũ của tuyến này trong bảng trung gian
+            await transaction.request()
+                .input('idTuyen', sql.Int, id)
+                .query('DELETE FROM TUYENDUONG_DIEMDUNG WHERE idTuyenDuong = @idTuyen');
+
+            // b. Thêm lại danh sách mới
+            for (let i = 0; i < diemDung.length; i++) {
+                await transaction.request()
+                    .input('idTuyen', sql.Int, id)
+                    .input('idDiem', sql.Int, diemDung[i].idDiemDung)
+                    .input('thuTu', sql.Int, i + 1)
+                    .query(`INSERT INTO TUYENDUONG_DIEMDUNG (idTuyenDuong, idDiemDung, thuTu) VALUES (@idTuyen, @idDiem, @thuTu)`);
+            }
+        }
+
+        await transaction.commit();
+        return { message: "Cập nhật tuyến và điểm dừng thành công" };
+    } catch (err) {
+        await transaction.rollback();
+        throw err;
     }
+}
 
     static async create(routeData) {
         // DB chỉ cần tenTuyen, moTa, khoangCach, thoiGianDuKien

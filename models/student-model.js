@@ -12,15 +12,20 @@ class Student {
                     P.hoTen as tenPhuHuynh, 
                     P.soDienThoai as sdtPhuHuynh,
                     T.tenTuyen,
-                    D.tenDiemDung as diemDon,
+                    
+                    -- SỬA DÒNG NÀY: Đổi 'diemDon' thành 'tenDiemDon' cho thống nhất với Frontend cũ
+                    D.tenDiemDung as tenDiemDon, 
+                    
                     CASE 
                         WHEN H.trangThai = 1 THEN N'Đi học' 
                         ELSE N'Nghỉ' 
                     END as trangThaiText
                 FROM HOCSINH H
+                
                 LEFT JOIN PHUHUYNH P ON H.idPhuHuynh = P.idPhuHuynh
                 LEFT JOIN TUYENDUONG T ON H.idTuyen = T.idTuyenDuong
                 LEFT JOIN DIEMDUNG D ON H.idDiemDon = D.idDiemDung
+                WHERE H.trangThai = 1
                 ORDER BY H.idHocSinh DESC
             `)
     return result.recordset
@@ -152,23 +157,41 @@ class Student {
   }
 
   // DELETE học sinh (Soft Delete)
-  static async remove(id) {
-    const pool = await poolPromise
-    // Bỏ Transaction xóa bảng trung gian vì bảng đó không tồn tại trong thiết kế này
-    // Chỉ cần cập nhật trạng thái là xong
-    try {
-      const result = await pool
-        .request()
-        .input("id", sql.Int, id)
-        .query(`UPDATE HOCSINH SET trangThai = 0 WHERE idHocSinh = @id`)
+  // models/student-model.js
 
-      if (result.rowsAffected[0] === 0) throw new Error("Không tìm thấy học sinh")
+// models/student-model.js
 
-      return { message: "Đã vô hiệu hóa học sinh" }
-    } catch (err) {
-      throw err
+  // models/student-model.js
+
+static async remove(id) {
+    const pool = await poolPromise;
+    
+    // 1. KIỂM TRA RÀNG BUỘC
+    // Logic: Tìm xem học sinh này có trong bảng DIEMDANH của chuyến xe nào
+    // mà chuyến xe đó (LICHTRINH) chưa kết thúc (trangThaiDiChuyen != 2) hay không.
+    const activeCheck = await pool.request().input('id', sql.Int, id)
+        .query(`
+            SELECT COUNT(*) as count 
+            FROM DIEMDANH d
+            JOIN LICHTRINH l ON d.idLichTrinh = l.idLichTrinh
+            WHERE d.idHocSinh = @id 
+            AND (l.trangThaiDiChuyen IS NULL OR l.trangThaiDiChuyen != 2)
+        `);
+
+    // 2. NẾU BẬN -> BÁO LỖI
+    if (activeCheck.recordset[0].count > 0) {
+        throw new Error('CẢNH BÁO: Học sinh đang nằm trong danh sách điểm danh của chuyến xe chưa kết thúc. Không thể xóa!');
     }
-  }
+
+    // 3. NẾU RẢNH -> XÓA MỀM (Chuyển trạng thái về 0)
+    const result = await pool.request()
+        .input('id', sql.Int, id)
+        .query(`UPDATE HOCSINH SET trangThai = 0 OUTPUT INSERTED.* WHERE idHocSinh = @id`);
+
+    if (!result.recordset.length) throw new Error('Không tìm thấy học sinh');
+
+    return { message: 'Đã xóa hồ sơ học sinh thành công' };
+}
 
   static async getLinkedParents(studentId) {
     const pool = await poolPromise

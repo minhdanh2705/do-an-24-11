@@ -45,14 +45,33 @@ const BusesPage = () => {
   const handleAdd = () => { setSelectedBus(null); setDialogOpen(true); }
   const handleEdit = (bus) => { setSelectedBus(bus); setDialogOpen(true); }
   
-  const handleDelete = async (id) => {
-      if(window.confirm("Bạn có chắc muốn xóa xe này?")) {
-          try {
-              await busService.delete(id)
-              loadBuses()
-          } catch(err) { alert("Lỗi xóa: " + err.message) }
-      }
-  }
+  // Trong file BusManagement.jsx
+
+const handleDelete = async (id) => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa xe này không?")) return;
+
+    try {
+        await busService.delete(id);
+        
+        // Xóa thành công thì cập nhật lại list
+        setBuses((prev) => prev.filter((bus) => bus.idXe !== id && bus.idXeBus !== id));
+        alert("Xóa thành công!");
+
+    } catch (error) {
+        console.log("Chi tiết lỗi:", error);
+
+        // --- SỬA ĐOẠN NÀY ĐỂ HIỆN THÔNG BÁO TỪ BACKEND ---
+        
+        // Kiểm tra xem Backend có gửi 'message' về không
+        if (error.response && error.response.data && error.response.data.message) {
+            // Đây chính là dòng: "CẢNH BÁO: Xe đang thực hiện..."
+            alert(error.response.data.message); 
+        } else {
+            // Fallback nếu lỗi mạng hoặc lỗi khác
+            alert("Lỗi xóa: " + error.message);
+        }
+    }
+};
 
   // --- CẬP NHẬT HÀM HIỂN THỊ MÀU SẮC ---
   const getStatusLabel = (status) => {
