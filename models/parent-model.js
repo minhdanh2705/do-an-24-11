@@ -1,4 +1,5 @@
 import { sql, poolPromise } from '../config/database.js';
+
 class Parent {
     static async getStudentsByParentId(parentId) {
         const pool = await poolPromise;
@@ -30,12 +31,14 @@ class Parent {
 
     static async getAll() {
         const pool = await poolPromise;
+        // Lấy danh sách phụ huynh hoạt động
         const result = await pool.request().query('SELECT * FROM PHUHUYNH WHERE trangThai = 1 ORDER BY idPhuHuynh DESC');
         return result.recordset;
     }
 
     static async remove(id) {
         const pool = await poolPromise;
+        // Kiểm tra ràng buộc con cái
         const activeCheck = await pool.request().input('id', sql.Int, id)
             .query(`SELECT COUNT(*) as count FROM HOCSINH WHERE idPhuHuynh = @id AND trangThai = 1`);
 
@@ -43,6 +46,7 @@ class Parent {
             throw new Error('CẢNH BÁO: Phụ huynh này đang có con đang theo học. Không thể xóa!');
         }
 
+        // Xóa mềm
         const result = await pool.request().input('id', sql.Int, id)
             .query('UPDATE PHUHUYNH SET trangThai = 0 OUTPUT INSERTED.* WHERE idPhuHuynh = @id');
         
@@ -51,7 +55,6 @@ class Parent {
         return { message: 'Đã vô hiệu hóa tài khoản phụ huynh thành công' };
     }
 
-    // --- HÀM TẠO MỚI  ---
     static async create(data) {
         const { hoTen, soDienThoai, email, tenDangNhap, matKhau } = data;
         const pool = await poolPromise;
@@ -82,11 +85,10 @@ class Parent {
             
             const newParentId = parentRes.recordset[0].idPhuHuynh;
 
-            // 3. Tạo Tài khoản (LƯU TRỰC TIẾP MẬT KHẨU THÔ)
-            // Lưu ý: Đã đổi 'hashedPassword' thành 'matKhau'
+            // 3. Tạo Tài khoản (Mật khẩu thô)
             await transaction.request()
                 .input('taiKhoan', sql.VarChar, tenDangNhap)
-                .input('matKhau', sql.VarChar, matKhau) // <--- Truyền thẳng mật khẩu 123456 vào đây
+                .input('matKhau', sql.VarChar, matKhau)
                 .input('idPhuHuynh', sql.Int, newParentId)
                 .query(`INSERT INTO TAIKHOAN (taiKhoan, matKhau, vaiTro, idPhuHuynh, trangThai) VALUES (@taiKhoan, @matKhau, 'PHU_HUYNH', @idPhuHuynh, 1)`);
 
@@ -99,7 +101,6 @@ class Parent {
         }
     }
     
-    // Hàm cập nhật (giữ nguyên logic cũ nếu có, ở đây tôi thêm vào để đủ bộ)
     static async update(id, data) {
          const { hoTen, soDienThoai, email } = data;
          const pool = await poolPromise;

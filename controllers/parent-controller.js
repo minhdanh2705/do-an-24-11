@@ -1,14 +1,10 @@
 import { sql, poolPromise } from '../config/database.js';
 import Parent from '../models/parent-model.js';
 
-// --- 1. CÁC HÀM CƠ BẢN CHO ADMIN (CRUD) ---
-
 export const getAllParents = async (req, res) => {
     try {
-        const pool = await poolPromise;
-        // Lấy tất cả (Không dùng WHERE trangThai = 1 để Admin thấy được hết)
-        const result = await pool.request().query('SELECT * FROM PHUHUYNH WHERE trangThai = 1');
-        res.json({ success: true, data: result.recordset });
+        const result = await Parent.getAll(); // Gọi qua Model để có logic lọc trangThai=1
+        res.json({ success: true, data: result });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -29,11 +25,9 @@ export const getParentById = async (req, res) => {
 
 export const createParent = async (req, res) => {
     try {
-        // Gọi hàm create từ Model
         const result = await Parent.create(req.body);
         res.status(201).json({ success: true, message: result.message });
     } catch (err) {
-        // Các lỗi trùng lặp do mình throw new Error bên Model
         if (err.message.includes('đã được sử dụng') || err.message.includes('đã tồn tại')) {
             return res.status(400).json({ success: false, message: err.message });
         }
@@ -44,22 +38,12 @@ export const createParent = async (req, res) => {
 export const updateParent = async (req, res) => {
     try {
         const { id } = req.params;
-        const { hoTen, soDienThoai, email, trangThai } = req.body;
-        const pool = await poolPromise;
-        await pool.request()
-            .input('id', sql.Int, id)
-            .input('hoTen', sql.NVarChar, hoTen)
-            .input('soDienThoai', sql.NVarChar, soDienThoai)
-            .input('email', sql.NVarChar, email)
-            .input('trangThai', sql.Int, trangThai)
-            .query('UPDATE PHUHUYNH SET hoTen=@hoTen, soDienThoai=@soDienThoai, email=@email, trangThai=@trangThai WHERE idPhuHuynh=@id');
-        res.json({ success: true, message: 'Cập nhật thành công' });
+        const result = await Parent.update(id, req.body);
+        res.json({ success: true, message: result.message });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 };
-
-// controllers/parent-controller.js
 
 export const deleteParent = async (req, res) => {
     try {
@@ -67,24 +51,17 @@ export const deleteParent = async (req, res) => {
         const result = await Parent.remove(id);
         res.json({ success: true, message: result.message });
     } catch (err) {
-        console.error("Lỗi xóa phụ huynh:", err.message);
-
-        // Bắt lỗi Cảnh báo từ Model
         if (err.message.includes('CẢNH BÁO')) {
              return res.status(400).json({ success: false, message: err.message });
         }
-        
-        // Lỗi không tìm thấy
         if (err.message.includes('Không tìm thấy')) {
              return res.status(404).json({ success: false, message: err.message });
         }
-
-        // Lỗi hệ thống khác
         res.status(500).json({ success: false, message: 'Lỗi server: ' + err.message });
     }
 };
 
-// --- 2. CÁC HÀM CHO PHỤ HUYNH (APP) ---
+// ... Các hàm phụ khác giữ nguyên (getStudentsForParent, linkStudentToParent, unlinkStudentFromParent, getNotifications) ...
 export const getStudentsForParent = async (req, res) => {
     try {
         const { id } = req.params;
@@ -100,10 +77,7 @@ export const linkStudentToParent = async (req, res) => {
         const { id } = req.params; 
         const { studentId } = req.body;
         const pool = await poolPromise;
-        await pool.request()
-            .input('pid', sql.Int, id)
-            .input('sid', sql.Int, studentId)
-            .query('UPDATE HOCSINH SET idPhuHuynh = @pid WHERE idHocSinh = @sid');
+        await pool.request().input('pid', sql.Int, id).input('sid', sql.Int, studentId).query('UPDATE HOCSINH SET idPhuHuynh = @pid WHERE idHocSinh = @sid');
         res.json({ success: true, message: 'Liên kết thành công' });
     } catch (e) { res.status(500).json({success: false, message: e.message}); }
 };
@@ -112,28 +86,16 @@ export const unlinkStudentFromParent = async (req, res) => {
     try {
         const { studentId } = req.params;
         const pool = await poolPromise;
-        await pool.request()
-            .input('sid', sql.Int, studentId)
-            .query('UPDATE HOCSINH SET idPhuHuynh = NULL WHERE idHocSinh = @sid');
+        await pool.request().input('sid', sql.Int, studentId).query('UPDATE HOCSINH SET idPhuHuynh = NULL WHERE idHocSinh = @sid');
         res.json({ success: true, message: 'Hủy liên kết thành công' });
     } catch (e) { res.status(500).json({success: false, message: e.message}); }
 };
-// --- THÊM VÀO CUỐI FILE parent-controller.js ---
 
 export const getNotifications = async (req, res) => {
     try {
-        const { id } = req.params; // idPhuHuynh
+        const { id } = req.params;
         const pool = await poolPromise;
-        
-        // Lấy thông báo của phụ huynh này, sắp xếp mới nhất lên đầu
-        const result = await pool.request()
-            .input('pid', sql.Int, id)
-            .query(`
-                SELECT * FROM THONGBAO 
-                WHERE idPhuHuynh = @pid 
-                ORDER BY thoiGian DESC
-            `);
-            
+        const result = await pool.request().input('pid', sql.Int, id).query(`SELECT * FROM THONGBAO WHERE idPhuHuynh = @pid ORDER BY thoiGian DESC`);
         res.json({ success: true, data: result.recordset });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });

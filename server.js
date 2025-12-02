@@ -52,7 +52,10 @@ io.on('connection', (socket) => {
         console.log('Client đã ngắt kết nối:', socket.id);
     });
 });
-
+app.use((req, res, next) => {
+    console.log(`[DEBUG] Server nhận yêu cầu: ${req.method} ${req.url}`);
+    next();
+});
 // Routes
 app.use('/api', apiRoutes);
 

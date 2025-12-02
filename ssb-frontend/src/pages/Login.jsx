@@ -135,16 +135,6 @@ const Login = () => {
             </Button>
           </form>
 
-          <Box sx={{ mt: 4, p: 3, bgcolor: '#1a1a1a', borderRadius: 2, border: '1px solid #2a2a2a' }}>
-            <Typography variant="subtitle2" color="primary" gutterBottom fontWeight="bold">
-              Tài khoản demo:
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 2 }}>
-              <strong>Admin:</strong> admin / admin123<br />
-              <strong>Tài xế:</strong> taixe1 / taixe123<br />
-              <strong>Phụ huynh:</strong> phuhuynh1 / ph123
-            </Typography>
-          </Box>
         </Paper>
       </Container>
     </Box>
