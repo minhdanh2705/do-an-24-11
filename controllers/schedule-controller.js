@@ -13,7 +13,13 @@ export const createSchedule = async (req, res) => {
     try {
         const result = await Schedule.create(req.body);
         res.status(201).json({ success: true, data: result });
-    } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+    } catch (err) { 
+        // Bắt lỗi xung đột lịch trình hoặc Xe/Tài bị khóa
+        if (err.message.includes('XUNG ĐỘT') || err.message.includes('bị khóa')) {
+            return res.status(400).json({ success: false, message: err.message });
+        }
+        res.status(500).json({ success: false, message: err.message }); 
+    }
 };
 
 export const getAllSchedules = async (req, res) => {
@@ -37,7 +43,13 @@ export const updateSchedule = async (req, res) => {
         const id = Number(req.params.id);
         const result = await Schedule.update(id, req.body);
         res.json({ success: true, data: result });
-    } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+    } catch (err) { 
+        // Bắt lỗi CẢNH BÁO (Đang chạy/Đã xong)
+        if (err.message.includes('CẢNH BÁO')) {
+            return res.status(400).json({ success: false, message: err.message });
+        }
+        res.status(500).json({ success: false, message: err.message }); 
+    }
 };
 
 export const deleteSchedule = async (req, res) => {
@@ -45,7 +57,13 @@ export const deleteSchedule = async (req, res) => {
         const id = Number(req.params.id);
         const result = await Schedule.delete(id);
         res.json({ success: true, data: result });
-    } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+    } catch (err) { 
+        // Bắt lỗi CẢNH BÁO (Đang chạy/Đã xong)
+        if (err.message.includes('CẢNH BÁO')) {
+            return res.status(400).json({ success: false, message: err.message });
+        }
+        res.status(500).json({ success: false, message: err.message }); 
+    }
 };
 
 // --- 1. QUAN TRỌNG: API CẬP NHẬT TRẠNG THÁI & BẮN THÔNG BÁO ---

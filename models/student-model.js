@@ -82,6 +82,10 @@ class Student {
         throw new Error(`Điểm dừng ID ${idDiemDon} không tồn tại`)
       }
     }
+    if (!hoTen || hoTen.trim() === '' || !lop || lop.trim() === '') {
+        // Ném ra đúng câu thông báo bạn muốn
+        throw new Error("Thông báo thiếu thông tin bắt buộc");
+    }
 
     const request = pool
       .request()
@@ -112,15 +116,20 @@ class Student {
 
   // PUT cập nhật học sinh
   static async update(id, studentData) {
+    const { hoTen, lop, idPhuHuynh, idTuyen, idDiemDon, trangThai } = studentData;
+    if (hoTen !== undefined && hoTen.trim() === '') {
+        throw new Error("Thông báo thiếu thông tin bắt buộc");
+    }
+    // Nếu có gửi lop lên mà lại là chuỗi rỗng -> Báo lỗi
+    if (lop !== undefined && lop.trim() === '') {
+        throw new Error("Thông báo thiếu thông tin bắt buộc");
+    }
     const pool = await poolPromise
     const checkResult = await pool
       .request()
       .input("id", sql.Int, id)
       .query("SELECT idHocSinh FROM HOCSINH WHERE idHocSinh = @id")
     if (!checkResult.recordset.length) throw new Error("Không tìm thấy học sinh")
-
-    // Bỏ ngaySinh, noiSinh. Map lại idDiemDon
-    const { hoTen, lop, idPhuHuynh, idTuyen, idDiemDon, trangThai } = studentData
 
     const request = pool.request().input("id", sql.Int, id)
     const updates = []

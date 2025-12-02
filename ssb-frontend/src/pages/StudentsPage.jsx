@@ -92,8 +92,17 @@ const StudentsPage = () => {
         }
     }
 };
-
+    const validateInputs = (data) => {
+    // Kiểm tra tên và lớp
+    if (!data.hoTen || data.hoTen.trim() === "" || !data.lop || data.lop.trim() === "") {
+        alert("Thông báo thiếu thông tin bắt buộc"); 
+        return false;
+    }
+    return true;
+};
   const handleSave = async (studentData) => {
+    const isValid = validateInputs(studentData);
+    if (!isValid) return;
     try {
       if (selectedStudent) {
         await studentService.update(selectedStudent.idHocSinh, studentData)
@@ -104,8 +113,12 @@ const StudentsPage = () => {
       loadData()
       alert(selectedStudent ? 'Cập nhật thành công!' : 'Thêm mới thành công!')
     } catch (error) {
-      console.error("Failed to save student:", error)
-      alert("Lỗi: " + (error.response?.data?.message || error.message))
+      console.error("Lỗi:", error);
+        if (error.response && error.response.data && error.response.data.message) {
+            alert(error.response.data.message);
+        } else {
+            alert("Lỗi hệ thống: " + error.message);
+        }
     }
   }
 

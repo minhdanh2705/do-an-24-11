@@ -6,20 +6,30 @@ class Schedule {
         const { idTaiXe, idXe, idTuyen, thoiGianBatDau, thoiGianKetThuc, ngayChay } = scheduleData;
         const pool = await poolPromise;
 
+        // 1. Kiểm tra Tài xế/Xe có bị khóa không
         const statusCheck = await pool.request()
             .input('idTaiXe', sql.Int, idTaiXe).input('idXe', sql.Int, idXe)
             .query(`SELECT (SELECT trangThai FROM TAIXE WHERE idTaiXe=@idTaiXe) as tx, (SELECT trangThai FROM XEBUS WHERE idXe=@idXe) as xe`);
         if (statusCheck.recordset[0]?.tx === 0) throw new Error("Tài xế đang bị khóa!");
         if (statusCheck.recordset[0]?.xe === 0) throw new Error("Xe đang bị khóa!");
 
+        // 2. Kiểm tra Xung đột giờ giấc
         const checkConflict = await pool.request()
             .input('idTaiXe', sql.Int, idTaiXe).input('idXe', sql.Int, idXe)
             .input('ngayChay', sql.Date, ngayChay || new Date())
             .input('newStart', sql.VarChar(5), thoiGianBatDau).input('newEnd', sql.VarChar(5), thoiGianKetThuc)
-            .query(`SELECT COUNT(*) as count FROM LICHTRINH WHERE ngayChay = @ngayChay AND (idTaiXe = @idTaiXe OR idXe = @idXe) AND trangThai = 0 AND (trangThaiDiChuyen IS NULL OR trangThaiDiChuyen != 2) AND ((@newStart < thoiGianKetThuc) AND (@newEnd > thoiGianBatDau))`);
+            .query(`
+                SELECT COUNT(*) as count FROM LICHTRINH 
+                WHERE ngayChay = @ngayChay 
+                AND (idTaiXe = @idTaiXe OR idXe = @idXe) 
+                AND trangThai = 0 
+                AND (trangThaiDiChuyen IS NULL OR trangThaiDiChuyen != 2) 
+                AND ((@newStart < thoiGianKetThuc) AND (@newEnd > thoiGianBatDau))
+            `);
 
-        if (checkConflict.recordset[0].count > 0) throw new Error("XUNG ĐỘT: Tài xế hoặc Xe đang có lịch chạy chưa kết thúc!");
+        if (checkConflict.recordset[0].count > 0) throw new Error("XUNG ĐỘT: Tài xế hoặc Xe đang có lịch chạy trùng giờ chưa kết thúc!");
 
+        // 3. Tạo mới
         const transaction = new sql.Transaction(pool);
         await transaction.begin();
         try {
@@ -30,6 +40,7 @@ class Schedule {
             const res = await req.query(`INSERT INTO LICHTRINH (idTaiXe, idXe, idTuyen, ngayChay, thoiGianBatDau, thoiGianKetThuc, trangThai, thuTuTramHienTai, trangThaiDiChuyen, idDiemDungHienTai) OUTPUT INSERTED.idLichTrinh VALUES (@idTaiXe, @idXe, @idTuyen, @nc, @tg1, @tg2, 0, 1, 0, (SELECT TOP 1 idDiemDung FROM TUYENDUONG_DIEMDUNG WHERE idTuyenDuong = @idTuyen ORDER BY thuTu ASC))`);
             
             const newId = res.recordset[0].idLichTrinh;
+            // Copy học sinh từ Tuyến vào Điểm danh
             await transaction.request().input('lid', sql.Int, newId).input('tid', sql.Int, idTuyen)
                 .query(`INSERT INTO DIEMDANH (idLichTrinh, idHocSinh, trangThai) SELECT @lid, idHocSinh, 0 FROM HOCSINH WHERE idTuyen = @tid AND trangThai = 1`);
             
@@ -38,21 +49,56 @@ class Schedule {
         } catch (e) { await transaction.rollback(); throw e; }
     }
 
+    // --- HÀM UPDATE (CÓ RÀNG BUỘC) ---
     static async update(id, d) {
         const pool = await poolPromise;
-        await pool.request().input('id', sql.Int, id).input('tx', sql.Int, d.idTaiXe).input('xe', sql.Int, d.idXe).input('t', sql.Int, d.idTuyen).input('nc', sql.Date, d.ngayChay).input('t1', sql.VarChar(5), d.thoiGianBatDau).input('t2', sql.VarChar(5), d.thoiGianKetThuc)
+        
+        // 1. KIỂM TRA TRẠNG THÁI HIỆN TẠI
+        const check = await pool.request().input('id', sql.Int, id)
+            .query(`SELECT trangThaiDiChuyen FROM LICHTRINH WHERE idLichTrinh = @id`);
+            
+        if (!check.recordset[0]) throw new Error('Không tìm thấy lịch trình');
+        
+        const status = check.recordset[0].trangThaiDiChuyen;
+        
+        // CHẶN SỬA
+        if (status === 1) throw new Error('CẢNH BÁO: Chuyến xe ĐANG CHẠY. Không được phép chỉnh sửa lúc này!');
+        if (status === 2) throw new Error('CẢNH BÁO: Chuyến xe ĐÃ KẾT THÚC. Không thể thay đổi lịch sử!');
+
+        // 2. NẾU OK THÌ UPDATE
+        await pool.request()
+            .input('id', sql.Int, id)
+            .input('tx', sql.Int, d.idTaiXe).input('xe', sql.Int, d.idXe).input('t', sql.Int, d.idTuyen)
+            .input('nc', sql.Date, d.ngayChay).input('t1', sql.VarChar(5), d.thoiGianBatDau).input('t2', sql.VarChar(5), d.thoiGianKetThuc)
             .query(`UPDATE LICHTRINH SET idTaiXe=@tx, idXe=@xe, idTuyen=@t, ngayChay=@nc, thoiGianBatDau=@t1, thoiGianKetThuc=@t2 WHERE idLichTrinh=@id`);
-        return { message: "Updated" };
+        
+        return { message: "Cập nhật thành công" };
     }
 
+    // --- HÀM DELETE (CÓ RÀNG BUỘC) ---
     static async delete(id) {
         const pool = await poolPromise;
+        
+        // 1. KIỂM TRA TRẠNG THÁI TRƯỚC
+        const check = await pool.request().input('id', sql.Int, id)
+            .query(`SELECT trangThaiDiChuyen FROM LICHTRINH WHERE idLichTrinh = @id`);
+
+        if (!check.recordset[0]) throw new Error('Không tìm thấy lịch trình');
+
+        const status = check.recordset[0].trangThaiDiChuyen;
+
+        // CHẶN XÓA
+        if (status === 1) throw new Error('CẢNH BÁO: Chuyến xe ĐANG CHẠY. Không thể xóa!');
+        if (status === 2) throw new Error('CẢNH BÁO: Chuyến xe ĐÃ KẾT THÚC. Dữ liệu cần được lưu làm lịch sử, không thể xóa!');
+
+        // 2. NẾU OK THÌ XÓA
         const tr = new sql.Transaction(pool); await tr.begin();
         try {
             await tr.request().input('id', sql.Int, id).query(`DELETE FROM SUCO WHERE idLichTrinh = @id`);
             await tr.request().input('id', sql.Int, id).query(`DELETE FROM DIEMDANH WHERE idLichTrinh = @id`);
             await tr.request().input('id', sql.Int, id).query(`DELETE FROM LICHTRINH WHERE idLichTrinh = @id`);
-            await tr.commit(); return { message: "Deleted" };
+            await tr.commit(); 
+            return { message: "Xóa thành công" };
         } catch (e) { await tr.rollback(); throw e; }
     }
 
@@ -72,72 +118,35 @@ class Schedule {
         return s;
     }
 
-    // --- HÀM CẬP NHẬT TRẠNG THÁI (ĐÃ SỬA: CHỈ 1->2, CÒN LẠI LÀ 3) ---
     static async updateStatus(id, status) {
         const pool = await poolPromise;
         const transaction = new sql.Transaction(pool);
         await transaction.begin();
-
         try {
-            // 1. Cập nhật trạng thái chuyến xe
             let query = 'UPDATE LICHTRINH SET trangThaiDiChuyen = @status ';
-            if (Number(status) === 2) { 
-                 query += ', trangThai = 1 '; 
-            }
+            if (Number(status) === 2) { query += ', trangThai = 1 '; }
             query += ' WHERE idLichTrinh = @id';
 
-            await transaction.request()
-                .input('id', sql.Int, id)
-                .input('status', sql.Int, Number(status))
-                .query(query);
+            await transaction.request().input('id', sql.Int, id).input('status', sql.Int, Number(status)).query(query);
 
-            // 2. LOGIC CHỐT SỔ CHẶT CHẼ
             if (Number(status) === 2) { 
-                // a. Chỉ những bé "Đã lên xe" (1) -> Mới được chuyển thành "Đã trả" (2)
-                await transaction.request()
-                    .input('id', sql.Int, id)
-                    .query(`
-                        UPDATE DIEMDANH 
-                        SET trangThai = 2, thoiGianTra = GETDATE() 
-                        WHERE idLichTrinh = @id AND trangThai = 1
-                    `);
-
-                // b. Những bé còn lại "Chờ" (0) -> Chuyển thành "Vắng" (3)
-                await transaction.request()
-                    .input('id', sql.Int, id)
-                    .query(`
-                        UPDATE DIEMDANH 
-                        SET trangThai = 3 
-                        WHERE idLichTrinh = @id AND trangThai = 0
-                    `);
+                await transaction.request().input('id', sql.Int, id).query(`UPDATE DIEMDANH SET trangThai = 2, thoiGianTra = GETDATE() WHERE idLichTrinh = @id AND trangThai = 1`);
+                await transaction.request().input('id', sql.Int, id).query(`UPDATE DIEMDANH SET trangThai = 3 WHERE idLichTrinh = @id AND trangThai = 0`);
             }
-
             await transaction.commit();
             return { message: 'OK' };
-        } catch (err) {
-            await transaction.rollback();
-            throw err;
-        }
+        } catch (err) { await transaction.rollback(); throw err; }
     }
     
-    // Hàm điểm danh lẻ
     static async updateAttendance(scheduleId, studentId, status) {
         const pool = await poolPromise;
         let timeUpdate = '';
         if (Number(status) === 1) timeUpdate = ', thoiGianDon = GETDATE() ';
         if (Number(status) === 2) timeUpdate = ', thoiGianTra = GETDATE() ';
 
-        await pool.request()
-            .input('scheduleId', sql.Int, scheduleId)
-            .input('studentId', sql.Int, studentId)
-            .input('status', sql.Int, Number(status))
-            .query(`
-                UPDATE DIEMDANH 
-                SET trangThai = @status ${timeUpdate} 
-                WHERE idLichTrinh = @scheduleId AND idHocSinh = @studentId
-            `);
+        await pool.request().input('scheduleId', sql.Int, scheduleId).input('studentId', sql.Int, studentId).input('status', sql.Int, Number(status))
+            .query(`UPDATE DIEMDANH SET trangThai = @status ${timeUpdate} WHERE idLichTrinh = @scheduleId AND idHocSinh = @studentId`);
         return { message: 'OK' };
     }
 }
-
 export default Schedule;

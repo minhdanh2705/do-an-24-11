@@ -90,8 +90,14 @@ const handleViewMap = (schedule) => {
       try {
         await scheduleService.delete(id)
         loadAllData()
+        alert("Xóa thành công!"); // Thêm thông báo thành công
       } catch (error) {
-        alert("Lỗi khi xóa: " + (error.response?.data?.message || error.message))
+        // CẬP NHẬT: Ưu tiên hiển thị message từ Backend (CẢNH BÁO...)
+        if (error.response && error.response.data && error.response.data.message) {
+            alert(error.response.data.message);
+        } else {
+            alert("Lỗi khi xóa: " + error.message);
+        }
       }
     }
   }
@@ -108,7 +114,12 @@ const handleViewMap = (schedule) => {
       setDialogOpen(false)
       loadAllData()
     } catch (err) {
-      alert("Lỗi: " + (err.response?.data?.message || err.message))
+      // CẬP NHẬT: Ưu tiên hiển thị message từ Backend
+      if (err.response && err.response.data && err.response.data.message) {
+          alert(err.response.data.message);
+      } else {
+          alert("Lỗi: " + err.message);
+      }
     }
   }
 
